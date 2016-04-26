@@ -70,3 +70,4 @@ points(c(200,300,400,500,600,700,800),correl[,3],col="blue")
 legend("topright", pch=21 ,col = c("black", "red", "blue"), legend=c("Chao", "Boot", "Species"))
 
 cambio esn el branch
+gitpush
