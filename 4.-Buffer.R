@@ -36,7 +36,7 @@ for (j in 1:8){
 
 #### Riqueza regional ####
 #especies por inventarios (tabla original, antes de registros únicos)
-rib1<-read.csv("/Users/marialeomontes/Dropbox/Riqueza vegetación riparia/ARTÍCULO/Datos/Inventarios Libro Sur 2015 18122015.csv", header = T, sep = ";")
+rib1<-read.csv("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/Inventario_LibroSurPI_coord.csv", header=T, sep=",")
 
 #eliminamos las especies que salen dos veces (a veces hay una especie duplicada porque tiene dos biotipos)
 rib1<-rib1[,c("Tesela","TAXON..revisado.en.azul.")]
@@ -48,9 +48,10 @@ ribcont<-table(rib1$Tesela,rib1$TAXON..revisado.en.azul. )
 #ni es el número de buffers que es igual al número de puntos o longitud de la matriz res
 ni<-662
 #estrichL es la lista que almacena las 8 matrices estrich, que contienen los resultados de
+rib1<-read.csv("/Users/marialeomontes/Dropbox/Riqueza vegetación riparia/ARTÍCULO/Datos/Inventarios Libro Sur 2015 18122015.csv", header = T, sep = ";")
 #las estimas de las riquezas regionales en los buffers (1/escala)
 estrichL<-list()
-estrich<-matrix(0,ni,4)
+estrich<-as.data.frame(matrix(data= 0,ni,4))
 colnames(estrich)<-c("species","chao","chao.se","boot")
 
 i<-1
@@ -62,7 +63,7 @@ for (j in 1:8){
   df<-ribcont[res[[j]][,i]==1,]
   
       if (class(df)=="integer") {       #con estas dos lineas hacemos que si hay un único
-      estrich[i,1:4]<-"NA"} else        #punto por buffer no lo calcule (no se puede)
+      estrich[i,1:4]<- -9999} else        #punto por buffer no lo calcule (no se puede)
        {pool <- specpool(df)
         estrich[i,1]<-pool$Species
         estrich[i,2]<-pool$chao
@@ -91,14 +92,14 @@ for (i in 1:8){
 }
 
 #marranada con las riquezas locales y regionales (tarda mucho el loop de riqueza regional)
-write.csv(as.data.frame(allrich[[1]]), file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R/allrich1.csv")
-write.csv(as.data.frame(allrich[[2]]), file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R/allrich2.csv")
-write.csv(as.data.frame(allrich[[3]]), file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R/allrich3.csv")
-write.csv(as.data.frame(allrich[[4]]), file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R/allrich4.csv")
-write.csv(as.data.frame(allrich[[5]]), file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R/allrich5.csv")
-write.csv(as.data.frame(allrich[[6]]), file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R/allrich6.csv")
-write.csv(as.data.frame(allrich[[7]]), file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R/allrich7.csv")
-write.csv(as.data.frame(allrich[[8]]), file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R/allrich8.csv")
+# write.csv(as.data.frame(allrich[[1]]), file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R/allrich1.csv")
+# write.csv(as.data.frame(allrich[[2]]), file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R/allrich2.csv")
+# write.csv(as.data.frame(allrich[[3]]), file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R/allrich3.csv")
+# write.csv(as.data.frame(allrich[[4]]), file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R/allrich4.csv")
+# write.csv(as.data.frame(allrich[[5]]), file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R/allrich5.csv")
+# write.csv(as.data.frame(allrich[[6]]), file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R/allrich6.csv")
+# write.csv(as.data.frame(allrich[[7]]), file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R/allrich7.csv")
+# write.csv(as.data.frame(allrich[[8]]), file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R/allrich8.csv")
 
 #### Correlaciones riqueza local y regional ####
 correl<-matrix(NA,nrow = 8,ncol = 3) #matriz almacenaje de resultados: nrow=escalas, ncol=nestimadores

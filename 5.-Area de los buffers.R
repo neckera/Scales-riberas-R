@@ -37,3 +37,16 @@ for (i in 1:8){
   bf<-gBuffer(spgeom = p, width = sqrt(i*z/pi) , byid = T)
   plot(bf, add=T)
 }
+#calcular que porcentaje del área total es el buffer más pequeño y el más grande
+#para hacer el mismo porcentaje en áreas estimadas
+areatotal<-258215823294.66
+
+#proporción del buffer más pequeño
+(min(ar200)*100)/areatotal
+#proporción del buffer más grande
+(max(ar800)*100)/areatotal
+
+#los buffers van del 0.1 al 13.5% del total
+#calculamos los porcentajes 
+perc_iv<-(13.5-0.1)/8
+#redondeando es un 1.7% del tamaño total lo que se aumenta

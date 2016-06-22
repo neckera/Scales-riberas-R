@@ -118,8 +118,8 @@ write.csv(ribestrich7, file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULO
 write.csv(ribestrich8, file = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/EstrichCuencas/estrich800.csv", row.names = FALSE)
 
 #### Unir riqueza local con los identificadores de las cuencas ####
-lrich<-read.csv("localrich_PI.csv", header=T, sep=";")
-curvac<-read.csv("rib_curvasacumulacion.csv", header=T, sep=";")
+lrich<-read.csv("/Users/marialeomontes/Dropbox/LocalRegional/Datos/Estrich/localrich_PI.csv", header=T, sep=";")
+curvac<-read.csv("/Users/marialeomontes/Dropbox/LocalRegional/Datos/Estrich/rib_curvasacumulacion.csv", header=T, sep=";")
 
 #comprobar que los nombres de los inventarios son iguales
 setdiff(levels(lrich$Tesela), levels(invdn$Tesela))
