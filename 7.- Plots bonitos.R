@@ -7,8 +7,12 @@ library(dplyr)
 
 #### BUFFERS ####
 #subset datos riqueza regional para hacer el plot
+# no está bien hecho este primer plot porque acumula riquezas de hasta 11000. el problema viene de.
+# melt pero no consigo solucionarlo
 meltes<-melt(estrichL)
-ssmelt<-subset(meltes, Var2 %in% "species") 
+meltes$value <- as.numeric(meltes$value)
+ssmelt<-subset(meltes, variable %in% "species") 
+ssmelt[ssmelt == -9999] <- NA
 ssmelt2<-dplyr::select(ssmelt, value:L1)
 head(ssmelt2)
 
@@ -16,9 +20,10 @@ head(ssmelt2)
 ggplot(data = ssmelt2, aes(x= as.character(ssmelt2$L1), y=as.numeric(ssmelt2$value), group=ssmelt2$L1)) + 
   geom_boxplot() + 
   #add texts and y range
-  scale_x_discrete(name="Buffer Area (km2)", breaks=c("1","2","3","4","5","6","7","8"),
-            labels=c("4500", "9000", "13500", "18000", "22500", "27000", "31500", "36000")) +
-  scale_y_continuous(name="Regional Richness", limits=c(0, 12000))+
+  scale_x_discrete(name="Buffer Area (km2)", breaks=c("1","2","3","4","5","6","7","8")
+            #, labels=c(37846.99) HAY QUE REVISAR LAS ÁREAS
+            ) +
+  scale_y_continuous(name="Regional Richness", limits=c(0, 1200))+
   #legend
   theme(legend.background = element_rect( size=.5, linetype="dotted")) 
 

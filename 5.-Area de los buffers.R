@@ -1,10 +1,29 @@
 areas<-read.csv("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/areas_sc200800.csv", sep=";")
-ar200<-areas[,4]
-ar800<-areas[,2]
+ar100<-areas$AREA_100
+ar200<-areas$AREA_200
+ar300<-areas$AREA_300
+ar400<-areas$AREA_400
+ar500<-areas$AREA_500
+ar600<-areas$AREA_600
+ar700<-areas$AREA_700
+ar800<-areas$AREA_800
+
+ar200<-na.omit(ar200)
+ar300<-na.omit(ar300)
+ar400<-na.omit(ar400)
+ar500<-na.omit(ar500)
+ar600<-na.omit(ar600)
+ar700<-na.omit(ar700)
 ar800<-na.omit(ar800)
 
 #rm duplicated values
+# no interesa si estamos haciendo medianas, no?
 ar200<-unique(ar200)
+ar300<-unique(ar300)
+ar400<-unique(ar400)
+ar500<-unique(ar500)
+ar600<-unique(ar600)
+ar700<-unique(ar00)
 ar800<-unique(ar800)
 
 #object to save

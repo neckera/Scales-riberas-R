@@ -10,7 +10,7 @@ library(betapart)
 #load data
 puntos<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/GIS", layer="Inventarios_PI")
 puntos.df<-as.data.frame(puntos@data)
-sc<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/GIS", layer="Subcuenca_c_800")
+# sc<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/GIS", layer="Subcuenca_c_800")
   
 #### Buffers ####
 #W viene del script "5.-Area de los buffers": con un redondeo, 4339374683 pasa a 4500000000

@@ -131,7 +131,7 @@ corr <- function(x){
 correl <- lapply(allrich, corr)
 co <- t(as.data.frame(correl))
 rownames(co) <- paste0("Scale_", 1:8)
-plot.ts(co, plot.type = "single", col=c("black", "red", "blue"), lwd=3)
+plot.ts(co, plot.type = "single", col=c("black", "red", "blue"), lwd=2, ylim=c(-0.2, 0.4), main="Correl riqueza local y regional en costes")
 
 #### Beta ####
 
