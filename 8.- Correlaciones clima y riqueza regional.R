@@ -22,12 +22,15 @@ sc700<-readOGR(dsn = "/Users/marialeomontes/Downloads/zip capas corr alberto", l
 sc800<-readOGR(dsn = "/Users/marialeomontes/Downloads/zip capas corr alberto", layer="Subcuenca_c_800")
 
 # calcular las áreas de cada polígono para todas las capas y después la mediana
-aa <- sapply(sc800@polygons, function(x) x@Polygons[[1]]@area)
-a <- sapply(slot(sc800, "polygons"), slot, "area")
+# la idea es conseguir al final una tabla de dos columnas, en la primera la escala y en
+# la segunda la mediana de tamaño de áreas de cuenca para cada escala. 
+# INDRA: Esto es lo que no me sale
 
+aa <- sapply(sc800@polygons, function(x) x@Polygons[[1]]@area)
+med <- median(aa)
 
 #### Buffers ####
-# los buffers tendrán distinto tamaño una vez calculemos las cuencas
+# los buffers tendrán distinto tamaño una vez calculemos las cuencas. Hay que aplicar el 5
 # w <- 4500000000
 # ws <- sqrt(w/pi*1:8)
 
