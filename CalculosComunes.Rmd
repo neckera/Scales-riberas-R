@@ -1,0 +1,327 @@
+---
+title: "CalculosComunes"
+author: "María"
+date: "20 de octubre de 2016"
+output: html_document
+---
+### Prepare data
+```{r, tidy=TRUE}
+setwd("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional")
+
+library(dplyr)
+library(vegan)
+library(betapart)
+
+
+```
+
+### Regional richness
+#### Cuencas
+```{r, tidy=TRUE}
+rib1<-read.csv("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/Inventario_LibroSurPI_coord.csv", header=T, sep=",")
+invdn<-read.csv("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/Inv_DNCuencas.csv", header=T, sep=";")
+
+rib1T<-unique(rib1)
+rib1<-rib1T
+
+#Calcular una tabla de contingencias
+ribcont<-table(rib1$Tesela,rib1$TAXON..revisado.en.azul. )
+
+#Ahora le pegamos las columnas de las subcuencas a distintas escalas
+ribcont1<-cbind(ribcont,  invdn$DN_100)
+ribcont2<-cbind(ribcont1, invdn$DN_200)
+ribcont3<-cbind(ribcont2, invdn$DN_300)
+ribcont4<-cbind(ribcont3, invdn$DN_400)
+ribcont5<-cbind(ribcont4, invdn$DN_500)
+ribcont6<-cbind(ribcont5, invdn$DN_600)
+ribcont7<-cbind(ribcont6, invdn$DN_700)
+ribcont8<-cbind(ribcont7, invdn$DN_800)
+ribcont<-as.data.frame(ribcont8)
+colnames(ribcont)[1910:1917] <- c("DN_100", "DN_200", "DN_300", "DN_400", "DN_500", "DN_600", "DN_700", "DN_800")
+
+#seleccionamos las columnas que tienen las sp
+cont<-ribcont[,1:1909]
+cont[cont>0]<-1
+cont[is.na(cont)]<-0
+
+#Creamos una lista para almacenar los resultados de las curvas de acumulación
+estrichL<-list()
+m<-colnames(ribcont[,1910:1917])
+
+j<-1
+i<-1
+
+#hacemos un loop para evitar iterar por cada subcuenca manualmente
+for (j in 1:8){
+    cont$DN_100 <-ribcont[,m[j]]
+
+    #Nos aseguramos de que la columna de SC/localidades/loquesea es un factor y hacemos un 
+    #objeto que contiene los niveles del factor
+    cont$DN_100<-factor(cont$DN_100)
+    cont.lev<-levels(cont$DN_100)
+
+    ni<-length(cont.lev)
+    estrich<-data.frame()
+    
+    require(vegan)
+        #loop para calcular curvas de acumulación
+        for (i in 1:ni){
+        df<-cont[cont$DN_100==cont.lev[i],]
+        if (dim(df)[1]==1) {                     #con estas dos lineas hacemos que si hay un único
+              estrich[i,1:4]<-"NA"} else        #punto por subcuenca no lo calcule (no se puede)
+       {pool <- specpool(df)
+        estrich[i,1]<-pool$Species
+        estrich[i,2]<-pool$chao
+        estrich[i,3]<-pool$chao.se
+        estrich[i,4]<-pool$boot
+        estrich[i,5]<-cont.lev[i]
+        }
+      }
+
+    #aquí almacenamos los resultados 
+    estrichL[[j]]<-estrich
+    print(c(j,i))
+}
+```
+
+#### GeoBuffers
+Esto en teoría es casi igual que el de cuencas, hay que revisarlo.
+```{r, tidy=TRUE, eval=FALSE}
+#especies por inventarios (tabla original, antes de registros únicos)
+rib1<-read.csv("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/Inventario_LibroSurPI_coord.csv", header=T, sep=",")
+
+#eliminamos las especies que salen dos veces (a veces hay una especie duplicada porque tiene dos biotipos)
+rib1<-rib1[,c("Tesela","TAXON..revisado.en.azul.")]
+rib1 <- unique(rib1)
+
+#tabla de contingencias
+ribcont<-table(rib1$Tesela,rib1$TAXON..revisado.en.azul. )
+
+#ni es el número de buffers que es igual al número de puntos o longitud de la matriz res
+ni<-662
+#estrichL es la lista que almacena las 8 matrices estrich, que contienen los resultados de
+# rib1<-read.csv("/Users/marialeomontes/Dropbox/Riqueza vegetación riparia/ARTÍCULO/Datos/Inventarios Libro Sur 2015 18122015.csv", header = T, sep = ";")
+#las estimas de las riquezas regionales en los buffers (1/escala)
+estrichL<-list()
+estrich<-as.data.frame(matrix(data= 0,ni,4))
+colnames(estrich)<-c("species","chao","chao.se","boot")
+
+i<-1
+j<-1
+
+for (j in 1:8){ 
+  for (i in 1:ni){
+    #df tiene aquellos inventarios que se encuentran dentro del buffer
+  df<-ribcont[res[[j]][,i]==1,]
+  
+      if (class(df)=="integer") {       #con estas dos lineas hacemos que si hay un único
+      estrich[i,1:4]<- -9999} else        #punto por buffer no lo calcule (no se puede)
+       {pool <- specpool(df)
+        estrich[i,1]<-pool$Species
+        estrich[i,2]<-pool$chao
+        estrich[i,3]<-pool$chao.se
+        estrich[i,4]<-pool$boot
+       }
+    }
+      estrichL[[j]]<-estrich
+      print(c(j,i))
+}
+```
+
+#### CostBuffers
+Este es distinto porque está vectorizado
+```{r, tidy=TRUE}
+#tabla de contingencias
+#especies por inventarios (tabla original, antes de registros únicos)
+rib1 <- read.csv("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/Inventario_LibroSurPI_coord.csv", header=T, sep=",")
+#eliminamos las especies que salen dos veces (a veces hay una especie duplicada porque tiene dos biotipos)
+rib1 <- rib1[,c("Tesela","TAXON..revisado.en.azul.")]
+rib1 <- unique(rib1)
+#tabla de contingencias
+ribcont <- table(rib1$Tesela,rib1$TAXON..revisado.en.azul. )
+
+#function para calcular las riquezas regionales para cada buffer
+indexes <- function (x) {
+  pool <- specpool(ribcont[x,])
+  Species <- pool$Species
+  Chao <- pool$chao
+  Chao.se <- pool$chao.se
+  Boot <- pool$boot
+  
+  return(c("Species"=Species, "Chao"=Chao, "Chao.se"=Chao.se, "Boot"=Boot))
+}
+
+#aplicar indexes
+# estrich<-apply(buffer,2,indexes)
+
+#aplicar indexes muchas veces
+estrichL<- lapply(buffers, function(buffer){
+          apply(buffer,2,indexes)})
+```
+
+### Correlation between local and regional richness
+#### Cuencas
+```{r, tidy=TRUE}
+base2 <- read.csv("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/TRich_Cuencas.csv", header=T, sep=",")
+
+
+i<-1
+j<-1
+correl<-matrix(NA,nrow = 8,ncol = 3) #matriz almacenaje de resultados: nrow=escalas, ncol=nestimadores
+colnames(correl)<-c("Chao", "Boot", "RegRich")
+est<-c("Chao_", "Boot_", "RegRich_")
+
+for (j in 1:3){ #loop por num estimadores
+  a<-dplyr::select(base2, num_range(est[j], c(100,200,300,400,500,600,700,800)))
+  for (i in 1:8){ #loop por escalas
+    z=as.numeric(a[,i])
+    n=as.numeric(base2$LocalRichness_l)
+    correl[i,j]<-cor(x=n, y=z, use="complete")
+  }
+  print(j,i)
+}
+```
+
+####
+
+#### GeoBuffers
+```{r, tidy=TRUE}
+# join local richness
+lrich<-read.csv("/Users/marialeomontes/Dropbox/LocalRegional/Datos/Estrich/localrich_PI.csv", sep=";")
+allrich<-list()
+
+i<-1
+for (i in 1:8){
+  allrich[[i]]<-cbind(x=estrichL[[i]], y=lrich)
+}
+
+
+correl<-matrix(NA,nrow = 8,ncol = 3) #matriz almacenaje de resultados: nrow=escalas, ncol=nestimadores
+colnames(correl)<-c("Chao","Boot","Species")
+
+#loop por num estimadores
+i<-1
+j<-1
+for (j in 1:3) { 
+  #loop por escalas  
+  for (i in 1:8){ 
+    c <- c(1,2,4) #la columna 3 tiene la sd del Chao que no nos interesa para correlacionar
+    z=as.numeric(allrich[[i]][,c[j]]) 
+    m=allrich[[i]]$y.LocalRichness_l
+    correl[i,j]<-cor(x=m, y=z, use="complete")
+    }
+}
+```
+
+#### CostBuffers
+```{r, tidy=TRUE}
+#fusionar lrich con la lista
+lrich <- read.csv("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/localrich_PI.csv", sep=";")
+#transponer lrich usando la 1a columna como colnames para que tenga las mismas dimensiones
+#que los elementos de la lista
+tlrich <- setNames(data.frame(t(lrich[,-1])), lrich[,1])
+#pegar lrich a cada estrichl por nombre
+allrich2 <- lapply(estrichL, function(c){
+            rbind(c, "LRich" = tlrich)
+})
+
+allrich <- lapply(allrich2, t)
+
+#function para calcular las correlaciones para un elemento de la lista
+# revisar allrich porque hay malas estimaciones regionales
+corr <- function(x){
+    x <- as.data.frame(apply(x,2,as.numeric))
+    corS <- cor(x$Species, x$LRich, use="complete")
+    corC <- cor(x$Chao, x$LRich, use="complete")
+    corB <- cor(x$Boot, x$LRich, use="complete")
+    
+    return(c("corS"=corS, "corC"=corC, "corB"=corB))
+}
+```
+
+### Beta
+#### Cuencas
+```{r, tidy=TRUE}
+resbeta<-list()
+colnames(resbetaL)<-c("beta.SIM", "beta.SNE", "beta.SOR")
+m<-colnames(ribcont[,1910:1917])
+
+i<-1
+j<-1
+for (j in 1:8){ 
+  
+  cont$DN_100 <-ribcont[,m[j]]
+  cont$DN_100<-factor(cont$DN_100)
+  cont.lev<-levels(cont$DN_100)
+  ni<-length(cont.lev)
+  resbetaL<-matrix(0,ni,3)
+  
+  for (i in 1:ni) {
+    #df tiene los inventarios de cada cuenca
+    df<-cont[cont$DN_100==cont.lev[i],]
+    beta<-beta.multi(x = df[,-1910], index.family = "sorensen")
+   
+    resbetaL[i,] <- matrix(unlist(beta), ncol = 3, byrow = TRUE)
+    
+  }
+  resbeta[[j]]<-resbetaL
+  print(c(j,i))
+}
+```
+
+#### GeoBuffers
+```{r, tidy=TRUE}
+resbeta<-list()
+resbetaL<-matrix(0,662,3)
+colnames(resbetaL)<-c("beta.SIM", "beta.SNE", "beta.SOR")
+
+i<-1
+j<-1
+for (j in 1:8){ 
+  for (i in 1:662){
+    #df tiene aquellos inventarios que se encuentran dentro del buffer
+    df<-ribcont[res[[j]][,i]==1,]
+    beta<-beta.multi(x = df, index.family = "sorensen")
+    resbetaL[i,] <- matrix(unlist(beta), ncol = 3, byrow = TRUE)
+    
+  }
+  resbeta[[j]]<-resbetaL
+  print(c(j,i))
+}
+
+```
+####
+```{r, tidy=TRUE}
+resbeta<-list()
+resbetaL<-matrix(0,662,3)
+colnames(resbetaL)<-c("beta.SIM", "beta.SNE", "beta.SOR")
+
+i<-1
+j<-1
+for (j in 1:8){ 
+  for (i in 1:662){
+    #df tiene aquellos inventarios que se encuentran dentro del buffer
+    df<-ribcont[res[[j]][,i]==1,]
+    beta<-beta.multi(x = df, index.family = "sorensen")
+    resbetaL[i,] <- matrix(unlist(beta), ncol = 3, byrow = TRUE)
+    
+  }
+  resbeta[[j]]<-resbetaL
+  print(c(j,i))
+}
+
+```
+
+#### CostBuffers
+```{r, tidy=TRUE}
+betaL <- lapply(buffers, function(buffer){
+  apply(buffer,2,function(x){beta.multi(ribcont[x,])})})
+
+resbeta <- lapply(X = betaL, function(x){do.call(rbind, x)})
+
+beta.SIM <- mapply(function(x){do.call(rbind, (x[,1]))}, resbeta)
+beta.SNE <- mapply(function(x){do.call(rbind, (x[,2]))}, resbeta)
+beta.SOR <- mapply(function(x){do.call(rbind, (x[,3]))}, resbeta)
+
+```
+
