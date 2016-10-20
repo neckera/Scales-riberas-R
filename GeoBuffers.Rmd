@@ -1,0 +1,97 @@
+---
+title: "GeoBuffers"
+author: "María"
+date: "20 de octubre de 2016"
+output: html_document
+---
+
+# Create GeoBuffers
+
+### Prepare data
+```
+setwd("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R")
+
+library(dplyr)
+library(sp)
+library(rgeos)
+library(rgdal)
+library(vegan)
+library(betapart)
+
+#load data
+puntos<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Inventarios_PI")
+puntos.df<-as.data.frame(puntos@data)
+sc<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Subcuenca_c_800")
+
+```
+
+### Buffers area
+Cómo la queremos calcular? El método que teníamos era a partir de extraer el área de las cuencas en GIS, coger el tamaño de la cuenca más grande en la escala mayor y el tamaño de la cuenca más pequeña en la escala menor y dividir en intervalos regulares ese tamaño
+Propuesta: Coger el tamaño mediano de las cuencas en cada escala y utilizar eso como tamaño de buffer
+
+### Geobuffers and communities in each buffer
+```
+i<-1
+j<-1
+w<-3500000000 #Esto es temporal
+
+res<-list()
+for (j in 1:10){
+  rek<-data.frame(matrix(0,ncol=663,nrow=663)) #crea un df para almacenar 1 y 0 de los inventarios que caen en cada buffer
+  rownames(rek)<-as.character(puntos@data$Tesela) 
+    
+  for (i in 1:663){
+      p <- SpatialPoints(puntos[i,c(2,3)])          #cada punto
+      proj4string(p) <- CRS("+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs")
+      bf<-gBuffer(spgeom = p, width = sqrt(j*w/pi) , byid = T) #buffer para un punto
+      a<-puntos[bf,]     #puntos que caen en el buffer 
+      rek[rownames(rek)%in%as.character(a@data$Tesela),i]<-1   #da valor 1 a los inventarios que caen en el buffer
+    }
+      res[[j]]<-rek     #res es una lista que contiene 10 rek, uno por escala
+      print(c(j,i))     #cuenta los pasos que lleva
+}
+```
+
+### GeoBuffers and climatic data in each buffer
+
+#### Load climatic data
+```
+cc <- read.csv("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/CoordClim.csv", header=T, sep=";")
+ccc <- cc[complete.cases(cc),]
+ccc <- dplyr::filter(ccc, ccc$Lon < 1)
+Climpoints <- SpatialPointsDataFrame(coords = ccc[,2:1], data = ccc[,10:13], proj4string = CRS("+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs"))
+
+sc100<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Subcuenca_c_100km")
+sc200<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Subcuenca_c_200km")
+sc300<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Subcuenca_c_300km")
+sc400<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Subcuenca_c_400km")
+sc500<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Subcuenca_c_500km")
+sc600<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Subcuenca_c_600km")
+sc700<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Subcuenca_c_700km")
+sc800<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Subcuenca_c_800")
+
+invent<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Inventarios_PI")
+
+```
+#### Climatic data in each buffer 
+```
+# calcular las áreas de cada polígono para todas las capas y después la mediana
+scs <- list(sc100=sc100, sc200=sc200, sc300=sc300, sc400=sc400, sc500=sc500, sc600=sc600, sc700=sc700, sc800=sc800)
+# aa <- sapply(scs, function(x){sapply(x@polygons, function(y){y@Polygons[[1]]@area})})
+aa <- sapply(scs, function(x){x@data$AREA_KM})
+med <- sapply(aa, median) # esto son AREAS
+radios <- sqrt(med/pi) # esto son DISTANCIAS =radios de buffers circulares
+
+# obtener coordenadas de las estaciones meteorologicas
+coorclim <- Climpoints@coords
+# obtener coordenadas de los centro de cada cuenca
+coorinvt <- as.matrix(data.frame("Lon"=invent@data[,3], "Lat"=invent@data[,2], row.names = invent@data$Tesela))
+
+# calcular distancia entre los centros de cada cuenca y cada estacion meteorologica
+pdist <- lapply(seq_along(1:nrow(coorinvt)), function(x){spDistsN1(coorclim, as.numeric(coorinvt[x,]), longlat=T)})
+
+# obtener las estaciones meteo q caen dentro de cada buffer de radio definido
+pclimbuff <- lapply(radios, function(radio){
+  lapply(pdist, function(x){which(x<radio)})
+  })
+```
