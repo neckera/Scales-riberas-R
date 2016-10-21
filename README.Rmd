@@ -1,20 +1,42 @@
-# README
+# Main Files
+### README.Rmd
+Este documento :)
 
-No estaría nada mal tener un readme file en el q se decriba cada archivo de código. más q nada pq a veces los títulos no son claros para todo el mundo.
+---
 
-Ah, esto es un archivo .Rmd
-es util pq puedes incluir texto con formateo básico y código de R.
+### CalculosComunes.Rmd
+**evaluar si es conveniente dividirlo en 2 archivos: uno de cálculos y otro exclusivo de plots**  
 
-Por ejemplo
-## texto
-- puedes usar guiones ("- " seguido de un espacio para guiones)
-- para cada
-- archivo q expliques
+Es el archivo donde realmente se hacen cálculos. Es decir,  
+Apartir de: los datos iniciales (polígonos, comunidades y estaciones meterológicas)  
+Se obtienen: riquezas locales y de pool, beta de pool y medias climáticas de pool.  
+Que finalmente se usan para crear 4 plots:
 
-## código
-```{r, echo=T}
-2+2
-summary(1:10)
-plot(1:10)
-```
+- riqueza de pool **vs** escala
+- beta de pool **vs** escala
+- correlación entre riqueza local y riqueza de pool **vs** escala
+- correlación entre riqueza de pool y media climática de pool **vs** escala
 
+
+
+### CostBuffers.Rmd
+**falta por completar**
+
+### GeoBuffers.Rmd
+Este código construye los polígonos (=buffers circulares) de radio creciente (asíntota cuadrática) alrededor de cada comunidad de manera que el incremento de área sea lineal.  
+El geobuffer más pequeño tiene un área equivalente (**decidir si min, mean or median**) a la cuenca hidrográfica más pequeña. Asimismo el geobuffer más grande es equivalente (**decidir si max, mean or median**) a la cuenca hidrográfica más grande.
+
+---
+
+# old.scripts
+Muchos archivos de código MUY válido, pero quizá demasiado verbose y probablemente reorganizable para facilitar su futuro uso.
+
+---
+
+# data
+**Creo q incluiré algo así**  
+debería contener:
+
+- polígonos (3métodos x 8escalas)
+- comunidades (662?)
+- datos climáticos (**cuántas??**)
