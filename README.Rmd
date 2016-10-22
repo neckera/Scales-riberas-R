@@ -1,6 +1,6 @@
 # Main Files
 ### README.Rmd
-Este documento :)
+Este documento (ref)[https://imgs.xkcd.com/comics/self_description.png] :)
 
 ---
 
