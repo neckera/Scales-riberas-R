@@ -4,7 +4,7 @@ debería contener:
 
 - polígonos (3métodos x 8escalas)
 - comunidades (662?)
-- datos climáticos (**cuántas??**)
+- datos climáticos (4873)
 
 ---
 
