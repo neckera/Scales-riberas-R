@@ -1,8 +1,21 @@
-# Main Files
-### README.Rmd
-Este documento :)
+# data
+**Creo q incluiré algo así**  
+debería contener:
+
+- polígonos (3métodos x 8escalas)
+- comunidades (662?)
+- datos climáticos (4873)
 
 ---
+
+# old.scripts
+Muchos archivos de código MUY válido, pero quizá demasiado verbose y probablemente reorganizable para facilitar su futuro uso.
+
+---
+
+# Main Scripts
+### README.Rmd
+Este documento ([ref](https://imgs.xkcd.com/comics/self_description.png)) :)
 
 ### CalculosComunes.Rmd
 **evaluar si es conveniente dividirlo en 2 archivos: uno de cálculos y otro exclusivo de plots**  
@@ -17,26 +30,12 @@ Que finalmente se usan para crear 4 plots:
 - correlación entre riqueza local y riqueza de pool **vs** escala
 - correlación entre riqueza de pool y media climática de pool **vs** escala
 
-
-
-### CostBuffers.Rmd
-**falta por completar**
+### Cuencas.Rmd
+(No existe porque lo hacemos todo en QGIS)
 
 ### GeoBuffers.Rmd
-Este código construye los polígonos (=buffers circulares) de radio creciente (asíntota cuadrática) alrededor de cada comunidad de manera que el incremento de área sea lineal.  
+Este código construye los polígonos (=buffers circulares) de radio creciente (**asíntota cuadrática¿?**) alrededor de cada comunidad de manera que el incremento de área sea lineal.  
 El geobuffer más pequeño tiene un área equivalente (**decidir si min, mean or median**) a la cuenca hidrográfica más pequeña. Asimismo el geobuffer más grande es equivalente (**decidir si max, mean or median**) a la cuenca hidrográfica más grande.
 
----
-
-# old.scripts
-Muchos archivos de código MUY válido, pero quizá demasiado verbose y probablemente reorganizable para facilitar su futuro uso.
-
----
-
-# data
-**Creo q incluiré algo así**  
-debería contener:
-
-- polígonos (3métodos x 8escalas)
-- comunidades (662?)
-- datos climáticos (**cuántas??**)
+### CostBuffers.Rmd
+Con este código se calculan los polígonos de coste alrededor de cada inventario, aunque en vez de ser estrictamente un polígono, recogemos aquellos inventarios a una distancia inferior al umbral determinado a cada escala. En cada escala, este umbral deberá ser comparable al de la escala equivalente en las cuencas y los geobuffers.
