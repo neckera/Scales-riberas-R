@@ -1,0 +1,47 @@
+# data
+**Creo q incluiré algo así**  
+debería contener:
+
+- polígonos (3métodos x 8escalas)
+- comunidades (662?)
+- datos climáticos (4873)
+
+# old.scripts
+Muchos archivos de código MUY válido, pero quizá demasiado verbose y probablemente reorganizable para facilitar su futuro uso.
+
+# Main Scripts
+### README.Rmd
+Este documento ([ref](https://imgs.xkcd.com/comics/self_description.png)) :)
+
+### CalculosComunes.Rmd
+**conviene dividirlo en 2 archivos: uno de cálculos y otro exclusivo de plots**  
+
+Es el archivo donde realmente se hacen cálculos. Es decir,  
+Apartir de: los datos iniciales (polígonos, comunidades y estaciones meterológicas)  
+Se obtienen: riquezas locales y de pool, beta de pool y medias climáticas de pool.  
+Que finalmente se usan para crear 4 plots:
+
+- riqueza de pool **vs** escala
+- beta de pool **vs** escala
+- correlación entre riqueza local y riqueza de pool **vs** escala
+- correlación entre riqueza de pool y media climática de pool **vs** escala
+
+### Cuencas.Rmd
+(No existe porque lo hacemos todo en QGIS)
+
+### GeoBuffers.Rmd
+Este código construye los polígonos (=buffers circulares) de radio creciente (**asíntota cuadrática¿?**) alrededor de cada comunidad de manera que el incremento de área sea lineal.  
+El geobuffer más pequeño tiene un área equivalente (**confirmar si median**) a la cuenca hidrográfica más pequeña. Asimismo el geobuffer más grande es equivalente (**confirmar si median**) a la cuenca hidrográfica más grande.
+
+### CostBuffers.Rmd
+Con este código se calculan los polígonos de coste alrededor de cada inventario, aunque en vez de ser estrictamente un polígono, recogemos aquellos inventarios a una distancia inferior al umbral determinado a cada escala. En cada escala, este umbral deberá ser comparable al de la escala equivalente en las cuencas y los geobuffers.  
+
+---
+
+Quizá se pueda añadir algún detallito  
+*Con este código se calculan los polígonos de coste alrededor de cada inventario. El coste está definido tanto por la distancia como por la diferencia de altitud (por lo que se usa un Modelo Digital de Elevaciones, DEM).  
+Los polígonos están definidos por contener los píxeles a una distancia de coste menor a cierto umbral. El umbral crece linearmente de una escala a otra. El área capturada por cada polígono es difícil de controlar y por tanto desconocida a priori. A posteriori se proveerá un resumen de las áreas resultantes.  
+Es decir, aunque las áreas de de los costbuffers no son idénticas a las correspondientes áreas de los geobuffers o las cuencas, el patrón a lo largo de las 8 escalas sí debería ser comparable.*  
+
+**tengo mis dudas sobre la comparabilidad entre métodos:  
+imaginaos q las áreas de las cuencas incrementa linealmente y el área de los costbuffers incrementa cuadráticamente o asintóticamente. Los patrones de incremento de Regional Richness, no serían comparables. Tampoco cualquiera de los otras medias: beta, clima, etc.**
