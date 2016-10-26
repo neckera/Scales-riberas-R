@@ -14,7 +14,7 @@ Muchos archivos de código MUY válido, pero quizá demasiado verbose y probable
 Este documento ([ref](https://imgs.xkcd.com/comics/self_description.png)) :)
 
 ### CalculosComunes.Rmd
-**evaluar si es conveniente dividirlo en 2 archivos: uno de cálculos y otro exclusivo de plots**  
+**conviene dividirlo en 2 archivos: uno de cálculos y otro exclusivo de plots**  
 
 Es el archivo donde realmente se hacen cálculos. Es decir,  
 Apartir de: los datos iniciales (polígonos, comunidades y estaciones meterológicas)  
@@ -31,7 +31,7 @@ Que finalmente se usan para crear 4 plots:
 
 ### GeoBuffers.Rmd
 Este código construye los polígonos (=buffers circulares) de radio creciente (**asíntota cuadrática¿?**) alrededor de cada comunidad de manera que el incremento de área sea lineal.  
-El geobuffer más pequeño tiene un área equivalente (**decidir si min, mean or median**) a la cuenca hidrográfica más pequeña. Asimismo el geobuffer más grande es equivalente (**decidir si max, mean or median**) a la cuenca hidrográfica más grande.
+El geobuffer más pequeño tiene un área equivalente (**confirmar si median**) a la cuenca hidrográfica más pequeña. Asimismo el geobuffer más grande es equivalente (**confirmar si median**) a la cuenca hidrográfica más grande.
 
 ### CostBuffers.Rmd
 Con este código se calculan los polígonos de coste alrededor de cada inventario, aunque en vez de ser estrictamente un polígono, recogemos aquellos inventarios a una distancia inferior al umbral determinado a cada escala. En cada escala, este umbral deberá ser comparable al de la escala equivalente en las cuencas y los geobuffers.  
