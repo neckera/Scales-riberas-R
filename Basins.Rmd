@@ -1,0 +1,94 @@
+---
+title: "Análisis de Cuencas"
+author: "María (modified by Indra)"
+date: "inicio: 20 de octubre de 2016"
+output: html_document
+---
+
+```{r, echo=F}
+library(knitr)
+opts_knit$set(root.dir ="/home/indra/Dropbox/carpeta sin título/Datos_Indra")
+# setwd("/home/indra/Dropbox/carpeta sin título/Datos_Indra")
+ori.par <- par()
+todays.date <- gsub(x=Sys.Date(),pattern="-", replacement="")
+print(paste0("última versión: ", Sys.Date()))
+```
+
+```{r set-options, echo=FALSE, cache=FALSE}
+options(width = 1400)
+```
+
+### Load packages
+```{r, tidy=T}
+library(rgeos)
+library(raster)
+
+# library(dplyr)
+# library(sp)
+# library(rgdal)
+```
+
+## Load data
+```{r}
+# make a list of all the files containing sites in the specified folder
+names.bas <- dir(path='GIS', pattern="km.shp",full.names=T)
+# read all basins
+basins <- lapply(names.bas, shapefile)
+```
+
+### Comprobaciones
+España tiene 505.990 km²  
+la mitad de España son aproximadamente 250.000 km²  
+comprobacion:
+```{r, tidy=T}
+sapply(basins, function(scale){-sum(area(scale))/1000000})
+```
+en la scale 8 se producen 26 cuencas  
+comprobacion:
+```{r, out.width=1400}
+length(basins[[8]]@polygons)
+par(mfrow=c(1,2))
+plot(basins[[1]], main="scale 1"); plot(basins[[8]], main="scale 8")
+```
+es decir cada una debería tener una media de
+```{r}
+258000/26
+```
+comprobacion:
+```{r}
+summary(area(basins[[8]])/1000000)
+```
+
+### Resumen de áreas de las cuencas
+¿Cómo queremos dibujar los geobuffers?  
+
+- Propuesta inicial: extraer el área de las cuencas en GIS, coger el tamaño de la cuenca más grande en la escala mayor y el tamaño de la cuenca más pequeña en la escala menor y dividir en intervalos regulares ese tamaño  
+- **Nueva propuesta**: usar la **MEDIANA** del área de las cuencas en cada escala como referencia para los geobuffers
+
+La diferencia entre media y mediana no es enorme
+```{r, message=F, out.width=1400}
+summ.basins <- sapply(basins, function(scale){summary(area(scale)/1000000)})
+summ.basins
+par(mfrow=c(1,1))
+plot(summ.basins["Max.",], ylab="area (km²)", ylim=c(0,max(summ.basins["Max.",])), type="l", xlab="scale")
+lines(summ.basins["Min.",])
+lines(summ.basins["Median",])
+lines(summ.basins["Mean",])
+text(8,max(summ.basins["Mean",]), "avg", pos=3)
+text(8,max(summ.basins["Median",]), "med", pos=1)
+```
+dado q la distribución de las áreas de las cuencas no está muy sesgada
+```{r, results="hide", out.width=1400}
+par(mfrow=c(2,4))
+lapply(basins, function(scale){hist(area(scale)/1000000)})
+```
+
+### Check linear increase of area
+```{r, out.width=1400}
+par(mfrow=c(1,2))
+plot(summ.basins["Median",], type="o", ylab="mediana de las áreas (km²)", xlab="", main="el incremento de área\nes bastante lineal")
+abline(h=summ.basins["Median",])
+
+boxplot(sapply(basins, function(scale){area(scale)/1000000}), main="aunq la desviación de áreas\nes cada vez mayor", ylab="área (km²)")
+text(x=1:8, y=summ.basins["Max.",], paste0("n=",sapply(basins, function(scale){length(scale@polygons)})), pos=3, cex=0.5)
+```

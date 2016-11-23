@@ -228,7 +228,7 @@ loc.cos <- compact.local(regrich.cos, inv.cos, LocRich, area.cos, regcli.cos)
 
 # EXPORT RESULTS! :)
 ```{r}
-save(reg.bas, loc.bas, interbeta.bas, file = "/resultados/res.basins.Rdata")
-save(reg.geo, loc.geo, interbeta.geo, file = "/resultados/res.geobuffers.Rdata")
-save(reg.cos, loc.cos, interbeta.cos, file = "/resultados/res.costbuffers.Rdata")
+save(reg.bas, loc.bas, interbeta.bas, file = "res.basins.Rdata")
+save(reg.geo, loc.geo, interbeta.geo, file = "res.geobuffers.Rdata")
+save(reg.cos, loc.cos, interbeta.cos, file = "res.costbuffers.Rdata")
 ```

@@ -1,0 +1,313 @@
+---
+title: "Funciones Cálculos comunes"
+author: "Indra"
+date: "Last version `r Sys.Date()`"
+output: html_document
+---
+
+```{r, echo=F}
+library(knitr)
+```
+
+### Funciones que se basan en polygonos  
+*SOLO útiles para los método Basins y GeoBuffers*  
+
+- **Selección de inventarios o estaciones climáticas** que caen en cada polygono  
+*se puede entender "subinv"= RegPool = conjunto de inventarios q conforman el RegPool de la comunidad de interés*
+```
+subinv <- subset.points(polys, inv)
+subcli <- subset.points(polys, est)
+```
+
+- **Selección de inventarios o estaciones climáticas** por debajo de una distancia de coste (=umbral)  
+*se puede entender "subinv"= RegPool = conjunto de inventarios q conforman el RegPool de la comunidad de interés*
+```
+subinv <- subset.cost(inv.inv.cost.matrix, thresholds)
+subcli <- subset.cost(inv.est.cost.matrix, thresholds)
+```
+
+- Calcular el **Regional Area** de cada polygono en cada escala  
+*no tiene sentido para costbuffers, pues no se construyen polygonos (como mucho convex hulls)*  
+*como de momento está propuesto representar valores REALES de áreas en el eje X*  
+**NECESITAMOS encontrar una manera de medir áreas de los costbuffers**  
+```
+calc.RegArea(polys)
+```
+
+### Funciones para calcular resultados  
+*útiles para los 3 métodos*  
+
+- Calcular la **Local Richness** en cada inventario original
+```
+calc.LocRich(inv)
+```
+- Calcular la **Regional Richness** de cada RegPool en cada escala  
+```
+calc.RegRich(subinv)
+```
+
+- Calcular la **Regional Beta nested** de cada RegPool en cada escala  
+```
+calc.RegBnes(subinv)
+```
+- Calcular la **Regional Beta turnover** de cada RegPool en cada escala 
+```
+calc.RegBtur(subinv)
+```
+- Calcular el **Regional mean climate** de cada RegPool (de estaciones climáticas) en cada escala 
+```
+calc.RegClim(subcli)
+```
+
+---
+---
+
+# subset.points(polys, points)
+```{r}
+# SLOOOOOOOW version
+# subset.points <- function(polys, points) {
+#       lapply(polys, function(scale) {
+#             lapply(1:nrow(scale), function(polig) {
+#                   rownames(coordinates(points[scale[polig,],]))
+#             })
+#       })
+# }
+
+subset.points <- function(polys, points) {
+      lapply(polys, function(scale){
+            grouped <- over(scale, points, returnList = T)
+            grouped <- lapply(grouped, function(pool){rownames(coordinates(points[pool]))})
+            names(grouped) <- 1:length(grouped)
+            
+            dummy <- as.list(rep(NA, length(scale)))
+            dummy[1:length(scale) %in% names(grouped)] <- grouped
+            names(dummy) <- as.data.frame(scale)[,1]
+            return(dummy)
+      })
+}
+```
+
+# subset.cost(cost.matrix, thresholds)
+```{r}
+subset.cost <- function(cost.matrix, thresholds){
+      lapply(thresholds, function(umbral){
+          apply(cost.matrix,2,function(x){rownames(cost.matrix)[x<umbral]})
+      })
+}
+```
+
+# calc.ConvHull(subinv)
+```{r}
+calc.ConvHull <- function(subinv){
+dots <- lapply(subinv, function(scale){
+            lapply(scale, function(pool){
+                  inv[rownames(coordinates(inv)) %in% pool,]
+            })
+})
+      
+      hulls <- lapply(seq_along(dots), function(scale){
+            hulls.sc <- lapply(seq_along(dots[[scale]]), function(pool){
+                  nodes <- dots[[scale]][[pool]]
+                  hull <- gConvexHull(nodes)
+                  if(class(hull)=="SpatialPolygons"){
+                        hull <- SpatialPolygonsDataFrame(hull, data.frame(N=paste0(scale, ".", pool), row.names = rownames(hull)))
+                  }else{rm(hull)}
+            })
+            hulls.sc <- hulls.sc[sapply(hulls.sc, class)=="SpatialPolygonsDataFrame"]
+            hulls.sc <- do.call(bind, hulls.sc)
+      })
+return(hulls)
+}
+```
+
+# calc.RegArea(polys)
+```{r}
+# pensar en usar gArea(basins[[8]], byid=T)
+calc.RegArea <- function(polys){
+scales.areas <- lapply(polys, function(scale){-area(scale)/1000000})
+names(scales.areas) <- paste0("scale.", 1:length(polys))
+return(scales.areas)
+}
+```
+
+# calc.LocRich(inv)
+```{r}
+calc.LocRich <- function(inv){
+      # simplest method (relies on NO species duplication within inventario)
+      # table(inv$inv)
+    
+      # most reliable method (can avoid species duplication)
+      loc <- aggregate(inv$sp, by = list(inv$inv), function(comm){
+            length(unique(comm))
+      })
+      names(loc) <- c("inv", "rich")
+      return(loc)
+}
+```
+
+# calc.RegRich(subinv)
+```{r}
+calc.RegRich <- function(subinv){
+scales.regrich <- lapply(subinv, function(scale){
+            sapply(scale, function(pool){
+                  # pool <- unlist(pool)
+                  ifelse(length(pool)<3, NA,
+                  specpool(invtab[rownames(invtab)%in%pool,])$Species)
+            })
+      })
+names(scales.regrich) <- paste0("scale.", 1:length(subinv))
+return(scales.regrich)
+}
+```
+
+# calc.intraBeta(subinv)
+```{r}
+calc.intraBeta <- function(subinv){
+scales.intrabetas <- lapply(subinv, function(scale){
+            all <- sapply(scale, function(pool){
+                  if(length(pool)<3){list(NA, NA, NA)
+                        }else{beta.multi(invtab[rownames(invtab)%in%pool,])}
+            })
+            all <- t(all)
+            betas <- data.frame("intraBeta.tot"=unlist(all[,3]),
+                                "intraBeta.tur"=unlist(all[,1]),
+                                "intraBeta.nes"=unlist(all[,2]))
+            return(betas)
+      })
+names(scales.intrabetas) <- paste0("scale.", 1:length(subinv))
+return(scales.intrabetas)
+}
+```
+
+# calc.interBeta(subinv)
+```{r}
+calc.interBeta <- function(subinv){
+all.interbetas <- sapply(subinv, function(scale){
+      tall.pools <- sapply(scale, function(pool){
+                  if(length(pool)<3){rep(NA, ncol(invtab))
+                  }else{
+                        pool.tab <- invtab[rownames(invtab)%in%pool,]
+                        pool.sps <- apply(pool.tab, 2, sum, na.rm=T)
+                        pool.sps[pool.sps>0] <- 1
+                        return(pool.sps)
+                  }
+            })
+            all.pools <- t(tall.pools)
+            all.pools <- all.pools[complete.cases(all.pools),]
+            interbetas <- beta.multi(all.pools)
+            interbetas <- data.frame("interBeta.tot"=interbetas$beta.SOR,
+                                     "interBeta.tur"=interbetas$beta.SIM,
+                                     "interBeta.nes"=interbetas$beta.SNE)
+            return(interbetas)
+      })
+all.interbetas <- data.frame(t(all.interbetas))
+rownames(all.interbetas) <- paste0("scale.", 1:length(subinv))
+return(all.interbetas)
+}
+```
+
+# `calc.RegClim(subcli)`
+```{r}
+calc.RegClim <- function(subcli){
+      scales.regclim <- lapply(subcli, function(scale) {
+            scale.cli <- sapply(scale, function(pool) {
+                  if(length(pool) < 3){
+                        matrix(rep(NA, ncol(climest.raw)-3), nrow=1)
+                  }else{
+                        est.pool <- climest.raw[climest.raw$est %in% pool,-c(1:3)]
+                        apply(est.pool, 2, mean, na.rm=T)
+                  }
+            })
+            scale.cli <- t(scale.cli)
+            colnames(scale.cli) <- colnames(climest.raw)[-c(1:3)]
+            # scale.cli <- as.data.frame(scale.cli)
+            return(scale.cli)
+      })
+      names(scales.regclim) <- paste0("scale.", 1:length(subcli))
+      return(scales.regclim)
+}
+```
+
+
+# compact.regional(areas, reg, cli, intrabeta)
+```{r}
+compact.regional <- function(areas, reg, cli, intrabeta){
+      all <- lapply(seq_along(reg), function(scale){
+                  scale.name <- paste0("scale.", scale)
+                  area <- areas[[scale]]
+                  pool <- paste0("pool.", 1:length(area))
+                  regrich <- reg[[scale]]
+                  regcli <- cli[[scale]]
+                  intrabeta <- intrabeta[[scale]]
+                  
+                  # create dataframe with all these results
+                  data.frame("scale"=scale.name,
+                             "pool"=pool,
+                             "area"=area,
+                             "regrich"=regrich,
+                             regcli,
+                             intrabeta)
+            })
+      do.call(rbind, all)
+}
+
+```
+
+
+
+
+### alternative compact function
+```{r, echo=F}
+# compact.results <- function(pools, loc, areas, reg, cli, intrabeta, interbeta){
+# all.polys <- lapply(seq_along(reg), function(scale){
+#             all <- lapply(seq_along(reg[[scale]]), function(pool){
+#                   linv <- length(pools[[scale]][[pool]])
+#                   inv <- pools[[scale]][[pool]]
+#                   locrich <- loc[loc$inv%in%pools[[scale]][[pool]],2]
+#                   basin <- paste0("pool.", pool)
+#                   area <- areas[[scale]][[pool]]
+#                   regrich <- reg[[scale]][pool]
+#                   regcli <- as.data.frame(matrix(rep(cli[[scale]][pool,], linv), nrow=linv))
+#                   names(regcli) <- colnames(cli[[scale]])
+#                   tintrabeta <- as.data.frame(matrix(rep(intrabeta[[scale]][pool,], linv), nrow=linv, byrow=T))
+#                   names(tintrabeta) <- colnames(intrabeta[[scale]])
+#                   tinterbeta <- as.data.frame(matrix(rep(interbeta[scale,], linv), nrow=linv, byrow=T))
+#                   names(tinterbeta) <- colnames(interbeta)
+#                   
+#                   # create dataframe with all hese results
+#                   data.frame(
+#                         "scale"=paste0("scale.", scale),
+#                         "inv"=inv,
+#                         "locrich"=locrich,
+#                         "basins"=basin,
+#                         "area"=area,
+#                         "regrich"=regrich,
+#                         regcli,
+#                         tintrabeta,
+#                         tinterbeta
+#                   )
+#             })
+#             do.call(rbind, all)
+#       })
+# all.scale <- do.call(rbind, all.polys)
+# }
+```
+
+# `compact.local(reg, pools, loc)`
+```{r}
+compact.local <- function(reg, pools, loc, areas, regcli){
+      lapply(seq_along(reg), function(scale){
+            all <- lapply(seq_along(reg[[scale]]), function(pool){
+                  data.frame("inv"=pools[[scale]][[pool]],
+                             "pool"=paste0("pool", pool),
+                             "area"=areas[[scale]][[pool]],
+                             "locrich"=loc[loc$inv%in%pools[[scale]][[pool]],2],
+                             "regrich"=reg[[scale]][pool],
+                             regcli[[scale]][pool,,drop=F]
+                             )
+            })
+            all.scale <- do.call(rbind, all)
+      })
+}
+```
+

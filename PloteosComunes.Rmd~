@@ -1,0 +1,269 @@
+---
+title: "Ploteos comunes"
+author: "Indra"
+date: "inicio: 14 de noviembre de 2016"
+output: html_document
+---
+Last version: `r Sys.Date()`
+
+```{r, echo=F}
+library(knitr)
+opts_knit$set(root.dir ="/home/indra/Dropbox/carpeta sin título/Datos_Indra")
+# setwd("/home/indra/Dropbox/carpeta sin título/Datos_Indra")
+ori.par <- par()
+```
+
+```{r set-options, echo=FALSE}
+options(width = 1400)
+```
+
+# Load inputs
+### Load packages
+```{r loadpackages, tidy=T}
+library(rgeos) # para calcular áreas etc
+library(raster) # para importar shapefiles etc
+library(rgdal) # para cambiar proyecciones de capas etc
+library(vegan) # para calcular las riquezas
+library(betapart) # para calcular betas
+library(plyr) # para compactar resultados
+```
+
+### Load results: BASINS
+```{r loadresbasins}
+load("res.basins.Rdata")
+load("res.geobuffers.Rdata")
+load("res.costbuffers.Rdata")
+```
+
+# calculate correlations
+```{r}
+cor.bas <- ddply(reg.bas, .(scale), summarize,
+              area.med = median(area),
+              cor.reg.tam = cor(tam, regrich, use="complete"),
+              cor.reg.tcqm = cor(tcqm, regrich, use="complete"),
+              cor.reg.pa = cor(pa, regrich, use="complete"),
+              cor.reg.pcq = cor(pcq, regrich, use="complete")
+              )
+# GEOBUFFERS
+cor.geo <- ddply(reg.geo, .(scale), summarize,
+              area.med = median(area),
+              cor.reg.tam = cor(tam, regrich, use="complete"),
+              cor.reg.tcqm = cor(tcqm, regrich, use="complete"),
+              cor.reg.pa = cor(pa, regrich, use="complete"),
+              cor.reg.pcq = cor(pcq, regrich, use="complete")
+              )
+# COSTBUFFERS
+cor.cos <- ddply(reg.cos, .(scale), summarize,
+              area.med = median(area, na.rm = T),
+              cor.reg.tam = cor(tam, regrich, use="complete"),
+              cor.reg.tcqm = cor(tcqm, regrich, use="complete"),
+              cor.reg.pa = cor(pa, regrich, use="complete"),
+              cor.reg.pcq = cor(pcq, regrich, use="complete")
+              )
+
+# comprobar q las areas de los hulls.cos están por encima del limite de la escala
+# es decir, 
+# en la escala 1 todos los poligonos deberian estar por encima de 100km²
+# en la escala 2 todos los poligonos deberian estar por encima de 200km²
+# en la escala 8 todos los poligonos deberian estar por encima de 800km²
+zz <- split(reg.cos, f=reg.cos$scale)
+yy <- lapply(seq_along(zz), function(scale){zz[[scale]][zz[[scale]]$area>scale*100,]})
+reg.cos.sup <- do.call(rbind, yy)
+
+area.cos.sup <- sapply(yy, function(scale){median(scale$area, na.rm=T)})
+```
+
+
+# plot REGIONAL richness
+```{r}
+par(mfcol=c(3,3), mar=c(2,4,2,0.5), oma=c(1,0,0,0))
+# basins
+boxplot(reg.bas$regrich ~ reg.bas$scale, ylab="richness", main="Basins")
+# par(mar=c(2,0.5,2,0.5))
+boxplot(x=split(reg.bas$regrich, f=reg.bas$scale), main="", at=cor.bas$area.med,
+        names=round(cor.bas$area.med), ylab="richness",
+        xlab="area (km²)", pars=list(boxwex=400), axes=T) #; axis(1); box()
+
+plot(regrich ~ area, data=unique(reg.bas[,c("regrich", "area")]), xlab="area (km²)", ylab="richness", axes=T) #; axis(1); box()
+
+# geobuffers
+# par(mar=c(2,4,2,0.5))
+boxplot(reg.geo$regrich ~ reg.geo$scale, ylab="richness", main="Geobuffers")
+# par(mar=c(2,0.5,2,0.5))
+boxplot(x=split(reg.geo$regrich, f=reg.geo$scale), main="", at=cor.geo$area.med,
+        names=round(cor.geo$area.med), ylab="richness",
+        xlab="area (km²)", pars=list(boxwex=400), axes=T) #; axis(1); box()
+
+plot(regrich ~ area, data=unique(reg.geo[,c("regrich", "area")]), xlab="area (km²)", ylab="richness", axes=T) #; axis(1); box()
+
+# costbuffers
+# par(mar=c(2,4,2,0.5))
+# boxplot(reg.cos$regrich ~ reg.cos$scale, ylab="richness", main="Costbuffers")
+# par(mar=c(2,0.5,2,0.5))
+# boxplot(x=split(reg.cos$regrich, f=reg.cos$scale), main="", at=cor.cos$area.med,
+#         names=round(cor.cos$area.med), ylab="",
+#         xlab="area (km²)", pars=list(boxwex=400), axes=F); axis(1); box()
+# 
+# plot(regrich ~ area, data=unique(reg.cos[,c("regrich", "area")]), xlab="area (km²)", ylab="", axes=F); axis(1); box()
+
+# corrected areas!!!
+# par(mar=c(2,4,2,0.5))
+boxplot(reg.cos.sup$regrich ~ reg.cos.sup$scale, ylab="richness", main="Costbuffers")
+# par(mar=c(2,0.5,2,0.5))
+boxplot(x=split(reg.cos.sup$regrich, f=reg.cos.sup$scale), main="", at=area.cos.sup,
+        names=round(area.cos.sup), ylab="richness",
+        xlab="area (km²)", pars=list(boxwex=400), axes=T) #; axis(1); box()
+
+plot(regrich ~ area, data=unique(reg.cos.sup[,c("regrich", "area")]), xlab="area (km²)", ylab="richness", axes=T) #; axis(1); box()
+
+```
+
+
+# plot cor(local vs pool richness)
+```{r}
+par(mfrow=c(1,3), mar=c(4,4,3,2), oma=c(1,1,1,1))
+# calculate CORRELATION local vs regional richness
+cor.RL.bas <- sapply(loc.bas, function(scale){
+      cor(scale$locrich, scale$regrich, use="complete")
+})
+
+plot(x=cor.bas$area.med, cor.RL.bas, main="Basins", type="o",
+     ylim=c(0,0.5), xlab="area (km²)", ylab="cor(LocRich vs RegRich)")
+abline(h=c(min(cor.RL.bas), 0.4), lty=2)
+
+# geobuffers
+cor.RL.geo <- sapply(loc.geo, function(scale){
+      cor(scale$locrich, scale$regrich, use="complete")
+})
+
+plot(x=cor.geo$area.med, cor.RL.geo, main="Geobuffers", type="o",
+     ylim=c(0,0.5), xlab="area (km²)", ylab="cor(LocRich vs RegRich)")
+abline(h=c(min(cor.RL.geo), 0.4), lty=2)
+
+# costbuffers
+cor.RL.cos <- sapply(loc.cos, function(scale){
+      cor(scale$locrich, scale$regrich, use="complete")
+})
+
+plot(x=area.cos.sup, cor.RL.cos, main="Costbuffers", type="o",
+     ylim=c(0,0.5), xlab="area (km²)", ylab="cor(LocRich vs RegRich)")
+abline(h=c(min(cor.RL.cos), 0.4), lty=2)
+
+```
+
+# plot cor(pool richness vs pool climate)
+```{r}
+par(mfrow=c(1,3), mar=c(4,4,3,2), oma=c(1,1,1,1))
+plot(x=cor.bas$area.med, y=cor.bas$cor.reg.tam, main="Basins", type="o", col="black", ylim=c(-0.5,0.5), xlab="area (km²)", ylab="cor pool climate vs Richness")
+
+lines(x=cor.bas$area.med, y=cor.bas$cor.reg.tcqm, type="o", col="red")
+lines(x=cor.bas$area.med, y=cor.bas$cor.reg.pa, type="o", col="blue")
+lines(x=cor.bas$area.med, y=cor.bas$cor.reg.pcq, type="o", col="green")
+
+# geobuffers
+plot(x=cor.geo$area.med, y=cor.geo$cor.reg.tam, main="Geobuffers", type="o", col="black", ylim=c(-0.5,0.5), xlab="area (km²)", ylab="cor pool climate vs Richness")
+
+lines(x=cor.geo$area.med, y=cor.geo$cor.reg.tcqm, type="o", col="red")
+lines(x=cor.geo$area.med, y=cor.geo$cor.reg.pa, type="o", col="blue")
+lines(x=cor.geo$area.med, y=cor.geo$cor.reg.pcq, type="o", col="green")
+
+# COSTBUFFERS
+plot(x=area.cos.sup, y=cor.cos$cor.reg.tam, main="Costbuffers", type="o", col="black", ylim=c(-0.5,0.5), xlab="area (km²)", ylab="cor pool climate vs Richness")
+
+lines(x=area.cos.sup, y=cor.cos$cor.reg.tcqm, type="o", col="red")
+lines(x=area.cos.sup, y=cor.cos$cor.reg.pa, type="o", col="blue")
+lines(x=area.cos.sup, y=cor.cos$cor.reg.pcq, type="o", col="green")
+
+```
+
+# plot beta intra-pool
+```{r}
+par(mfrow=c(1,3), mar=c(4,4,3,2), oma=c(1,1,1,1))
+# boxplot(x=split(reg.bas$intraBeta.tot, reg.bas$scale), at=cor.bas$area.med,
+#         names=round(cor.bas$area.med),
+#         main="intra-pool beta TOTAL", xlab="area (km²)", ylab="BASINS",
+#         ylim=c(0,1), pars=list(boxwex=400))
+# text(x=cor.bas$area.med, y=1, labels=paste0("",sapply(split(reg.bas$intraBeta.tot, reg.bas$scale), length)), pos=3)
+
+# turnover
+boxplot(x=split(reg.bas$intraBeta.tur, reg.bas$scale), at=cor.bas$area.med,
+        names=round(cor.bas$area.med),
+        main="Basins", xlab="area (km²)", ylab="intrabeta turnover",
+        ylim=c(0,1), pars=list(boxwex=400))
+text(x=cor.bas$area.med, y=1, labels=paste0("",sapply(split(reg.bas$intraBeta.tot, reg.bas$scale), length)), pos=3)
+
+# nestedness
+# boxplot(x=split(reg.bas$intraBeta.nes, reg.bas$scale), at=cor.bas$area.med,
+#         names=round(cor.bas$area.med),
+#         main="intra-pool beta NESTEDNESS", xlab="area (km²)", ylab="beta",
+#         ylim=c(0,1), pars=list(boxwex=400))
+# text(x=cor.bas$area.med, y=1, labels=paste0("",sapply(split(reg.bas$intraBeta.tot, reg.bas$scale), length)), pos=3)
+
+# GEOBUFFERS
+# boxplot(x=split(reg.geo$intraBeta.tot, reg.geo$scale), at=cor.geo$area.med,
+#         names=round(cor.geo$area.med),
+#         main="intra-pool beta TOTAL", xlab="area (km²)", ylab="GEOBUFFERS",
+#         ylim=c(0,1), pars=list(boxwex=400))
+# text(x=cor.geo$area.med, y=1, labels=paste0("",sapply(split(reg.geo$intraBeta.tot, reg.geo$scale), length)), pos=3)
+
+# turnover
+boxplot(x=split(reg.geo$intraBeta.tur, reg.geo$scale), at=cor.geo$area.med,
+        names=round(cor.geo$area.med),
+        main="Geobuffers", xlab="area (km²)", ylab="intrabeta turnover",
+        ylim=c(0,1), pars=list(boxwex=400))
+text(x=cor.geo$area.med, y=1, labels=paste0("",sapply(split(reg.geo$intraBeta.tot, reg.geo$scale), length)), pos=3)
+
+# nestedness
+# boxplot(x=split(reg.geo$intraBeta.nes, reg.geo$scale), at=cor.geo$area.med,
+#         names=round(cor.geo$area.med),
+#         main="intra-pool beta NESTEDNESS", xlab="area (km²)", ylab="beta",
+#         ylim=c(0,1), pars=list(boxwex=400))
+# text(x=cor.geo$area.med, y=1, labels=paste0("",sapply(split(reg.geo$intraBeta.tot, reg.geo$scale), length)), pos=3)
+
+# COSTBUFFERS
+# boxplot(x=split(reg.cos.sup$intraBeta.tot, reg.cos.sup$scale), at=area.cos.sup,
+#         names=round(area.cos.sup),
+#         main="intra-pool beta TOTAL", xlab="area (km²)", ylab="COSTBUFFERS",
+#         ylim=c(0,1), pars=list(boxwex=400))
+# text(x=area.cos.sup, y=1, labels=paste0("",sapply(split(reg.cos.sup$intraBeta.tot, reg.cos.sup$scale), length)), pos=3)
+
+# turnover
+boxplot(x=split(reg.cos.sup$intraBeta.tur, reg.cos.sup$scale), at=area.cos.sup,
+        names=round(area.cos.sup),
+        main="Costbuffers", xlab="area (km²)", ylab="intrabeta turnover",
+        ylim=c(0,1), pars=list(boxwex=400))
+text(x=area.cos.sup, y=1, labels=paste0("",sapply(split(reg.cos.sup$intraBeta.tot, reg.cos.sup$scale), length)), pos=3)
+
+# nestedness
+# boxplot(x=split(reg.cos.sup$intraBeta.nes, reg.cos.sup$scale), at=area.cos.sup,
+#         names=round(area.cos.sup),
+#         main="intra-pool beta NESTEDNESS", xlab="area (km²)", ylab="beta",
+#         ylim=c(0,1), pars=list(boxwex=400))
+# text(x=area.cos.sup, y=1, labels=paste0("",sapply(split(reg.cos.sup$intraBeta.tot, reg.cos.sup$scale), length)), pos=3)
+
+```
+
+# plot beta inter-pool
+```{r}
+par(mfrow=c(1,3), mar=c(4,4,3,2), oma=c(1,1,1,1))
+
+plot(cor.bas$area.med, interbeta.bas$interBeta.tur, type="o", lwd=2, ylim=c(0.7,1), main="Basins", xlab="area (km²)", ylab="interbeta turnover")
+
+# lines(cor.bas$area.med, interbeta.bas$interBeta.tot, type="o", lty=1)
+# lines(cor.bas$area.med, interbeta.bas$interBeta.nes, type="o", lty=2)
+# legend("left", lwd=c(2,1,1), lty=c(1,1,2), legend = c("total", "turnover", "nestedness"), bty="n", cex=0.8)
+
+# geobuffers
+plot(cor.geo$area.med, interbeta.geo$interBeta.tur, type="o", lwd=2, ylim=c(0.7,1), main="Geobuffers", xlab="area (km²)", ylab="interbeta turnover")
+
+# lines(cor.geo$area.med, interbeta.geo$interBeta.tur, type="o", lty=1)
+# lines(cor.geo$area.med, interbeta.geo$interBeta.nes, type="o", lty=2)
+# legend("left", lwd=c(2,1,1), lty=c(1,1,2), legend = c("total", "turnover", "nestedness"), bty="n", cex=0.8)
+
+# costbuffers
+plot(area.cos.sup, interbeta.cos$interBeta.tur, type="o", lwd=2, ylim=c(0.7,1), main="Costbuffers", xlab="area (km²)", ylab="interbeta turnover")
+
+# lines(area.cos.sup, interbeta.cos$interBeta.tur, type="o", lty=1)
+# lines(area.cos.sup, interbeta.cos$interBeta.nes, type="o", lty=2)
+# legend("left", lwd=c(2,1,1), lty=c(1,1,2), legend = c("total", "turnover", "nestedness"), bty="n", cex=0.8)
+```

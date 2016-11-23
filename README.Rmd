@@ -1,10 +1,14 @@
-# data
-**Creo q incluiré algo así**  
-debería contener:
+# input data
+**Solo disponible en DropBox hasta que se publiquen**  
+GIS  
 
-- polígonos (3métodos x 8escalas)
-- comunidades (662?)
-- datos climáticos (4873)
+- capa de ríos
+- raster DEM (Digital Elevation Model)
+
+CSV  
+
+- inventarios (662)
+- datos climáticos (4873) **decidir si solo estaciones y/o inventarios**
 
 # old.scripts
 Muchos archivos de código MUY válido, pero quizá demasiado verbose y probablemente reorganizable para facilitar su futuro uso.
@@ -28,20 +32,17 @@ Que finalmente se usan para crear 4 plots:
 
 ### Cuencas.Rmd
 (No existe porque lo hacemos todo en QGIS)
+**explicar qué función se usa (watershed?) y qué input data necesita (rios y DEM, no?)**
 
 ### GeoBuffers.Rmd
-Este código construye los polígonos (=buffers circulares) de radio creciente (**asíntota cuadrática¿?**) alrededor de cada comunidad de manera que el incremento de área sea lineal.  
+Este código construye los polígonos (=buffers circulares) de radio creciente (**curva cuadrática**) alrededor de cada comunidad de manera que el incremento de área sea lineal.  
 El geobuffer más pequeño tiene un área equivalente (**confirmar si median**) a la cuenca hidrográfica más pequeña. Asimismo el geobuffer más grande es equivalente (**confirmar si median**) a la cuenca hidrográfica más grande.
 
 ### CostBuffers.Rmd
-Con este código se calculan los polígonos de coste alrededor de cada inventario, aunque en vez de ser estrictamente un polígono, recogemos aquellos inventarios a una distancia inferior al umbral determinado a cada escala. En cada escala, este umbral deberá ser comparable al de la escala equivalente en las cuencas y los geobuffers.  
+Con este código recogemos aquellos inventarios a una distancia inferior al umbral de coste determinado para cada escala.  
+*El coste está definido tanto por la distancia como por la diferencia de altitud (por lo que se usa un Modelo Digital de Elevaciones, DEM). El umbral crece linearmente de una escala a otra.  
+Entre las comunidades más lejanas (por debajo del umbral de coste) se puede dibujar un convex hull (polígono). Este convex hull NO captura todos los pixeles a distancia de coste menor al umbral, solo las comunidades. Es decir, el convex hull también captura montañas que deberían evitarse (resultando en un "concave hull") pues llegar a esos pixeles de montaña está por *encima* del umbral de coste. Aún no sabemos cómo acometer este problema.  
+En cada escala, este umbral **deberá ser comparable (muy dificil de saber a priori)** al de la escala equivalente en las cuencas y los geobuffers. A posteriori se proveerá un resumen de las áreas resultantes. Es decir, aunque las áreas de los costbuffers no sean idénticas a las correspondientes áreas de los geobuffers o las cuencas, el patrón a lo largo de las 8 escalas sí debería ser comparable (siempre y cuando se ploteen los ejes X con valores reales, **NO factorizados a 1:8**.*  
 
----
-
-Quizá se pueda añadir algún detallito  
-*Con este código se calculan los polígonos de coste alrededor de cada inventario. El coste está definido tanto por la distancia como por la diferencia de altitud (por lo que se usa un Modelo Digital de Elevaciones, DEM).  
-Los polígonos están definidos por contener los píxeles a una distancia de coste menor a cierto umbral. El umbral crece linearmente de una escala a otra. El área capturada por cada polígono es difícil de controlar y por tanto desconocida a priori. A posteriori se proveerá un resumen de las áreas resultantes.  
-Es decir, aunque las áreas de de los costbuffers no son idénticas a las correspondientes áreas de los geobuffers o las cuencas, el patrón a lo largo de las 8 escalas sí debería ser comparable.*  
-
-**tengo mis dudas sobre la comparabilidad entre métodos:  
+**desarrollo mis dudas sobre la comparabilidad entre métodos:  
 imaginaos q las áreas de las cuencas incrementa linealmente y el área de los costbuffers incrementa cuadráticamente o asintóticamente. Los patrones de incremento de Regional Richness, no serían comparables. Tampoco cualquiera de los otras medias: beta, clima, etc.**

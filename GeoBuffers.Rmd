@@ -1,94 +1,125 @@
 ---
 title: "GeoBuffers"
-author: "María"
-date: "20 de octubre de 2016"
+author: "María (modified by Indra)"
+date: "inicio: 20 de octubre de 2016"
 output: html_document
 ---
 
-### Prepare data
-```{r, tidy=T, eval=F}
-library(dplyr)
-library(sp)
+Last version: `r Sys.Date()`
+
+```{r, echo=F}
+library(knitr)
+opts_knit$set(root.dir ="/home/indra/Dropbox/carpeta sin título/Datos_Indra")
+# setwd("/home/indra/Dropbox/carpeta sin título/Datos_Indra")
+ori.par <- par()
+```
+
+```{r set-options, echo=FALSE}
+options(width = 1400)
+```
+
+### Load packages
+```{r loadpacks, tidy=T, cache=T}
 library(rgeos)
+library(raster)
 library(rgdal)
-library(vegan)
-library(betapart)
-
-#load data
-puntos <- readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Inventarios_PI")
-puntos.df <- as.data.frame(puntos@data)
 ```
 
-### Buffers area
-Cómo la queremos calcular? El método que teníamos era a partir de extraer el área de las cuencas en GIS, coger el tamaño de la cuenca más grande en la escala mayor y el tamaño de la cuenca más pequeña en la escala menor y dividir en intervalos regulares ese tamaño  
-Propuesta: Coger el tamaño mediano de las cuencas en cada escala y utilizar eso como tamaño de buffer
+## Load data
+```{r loaddata, out.width=1400, cache=T}
+# make a list of all the files containing sites in the specified folder
+names.bas <- dir(path='GIS', pattern="basins.*shp",full.names=T)
+# read all basins
+basins <- lapply(names.bas, shapefile, verbose=F)
+# transform UTM data of polygons to longlat format
+basins <- lapply(basins, function(scale){spTransform(scale, CRS("+proj=longlat"))})
 
-### Geobuffers and communities in each buffer
-```{r, tidy=T, eval=F}
-i<-1
-j<-1
-w<-3500000000 #Esto es temporal
+# read inventarios
+inv <- read.table("inventarios.csv", header=T, sep=",")
+cinv <- unique(inv[,c("inv", "lon", "lat")])[,c("lon", "lat")]
+ninv <- unique(inv$inv)
+# transform numeric format of inventarios coordinates to spatial object
+coordinates(cinv) <- ~lon+lat
+proj4string(cinv) <- CRS("+proj=longlat +datum=WGS84")
 
-res<-list()
-for (j in 1:10){
-  rek<-data.frame(matrix(0,ncol=663,nrow=663)) #crea un df para almacenar 1 y 0 de los inventarios que caen en cada buffer
-  rownames(rek)<-as.character(puntos@data$Tesela) 
-    
-  for (i in 1:663){
-      p <- SpatialPoints(puntos[i,c(2,3)])          #cada punto
-      proj4string(p) <- CRS("+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs")
-      bf<-gBuffer(spgeom = p, width = sqrt(j*w/pi) , byid = T) #buffer para un punto
-      a<-puntos[bf,]     #puntos que caen en el buffer 
-      rek[rownames(rek)%in%as.character(a@data$Tesela),i]<-1   #da valor 1 a los inventarios que caen en el buffer
-    }
-      res[[j]]<-rek     #res es una lista que contiene 10 rek, uno por escala
-      print(c(j,i))     #cuenta los pasos que lleva
-}
+# plot all communities and basins at scale 8
+par(mfrow=c(1,1), pty="s", mar=c(0,0,2,0), oma=c(0,0,0,0))
+plot(basins[[8]], main="scale 8"); points(cinv, pch=3)
+```
+### Resumen de áreas de las cuencas
+¿Cómo queremos dibujar los geobuffers?  
+
+- Propuesta inicial: extraer el área de las cuencas en GIS, coger el tamaño de la cuenca más grande en la escala mayor y el tamaño de la cuenca más pequeña en la escala menor y dividir en intervalos regulares ese tamaño  
+- **Nueva propuesta**: usar la **MEDIANA** del área de las cuencas en cada escala como referencia para los geobuffers
+
+La diferencia entre media y mediana no es enorme
+```{r summbasins, message=F, out.width=1400, cache=T, dependson="loaddata"}
+summ.basins <- sapply(basins, function(scale){summary(-area(scale)/1000000)})
+summ.basins
 ```
 
-### GeoBuffers and climatic data in each buffer
-
-#### Load climatic data
-```{r, tidy=T, eval=F}
-cc <- read.csv("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/CoordClim.csv", header=T, sep=";")
-ccc <- cc[complete.cases(cc),]
-ccc <- dplyr::filter(ccc, ccc$Lon < 1)
-Climpoints <- SpatialPointsDataFrame(coords = ccc[,2:1], data = ccc[,10:13], proj4string = CRS("+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs"))
-
-sc100<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Subcuenca_c_100km")
-sc200<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Subcuenca_c_200km")
-sc300<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Subcuenca_c_300km")
-sc400<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Subcuenca_c_400km")
-sc500<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Subcuenca_c_500km")
-sc600<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Subcuenca_c_600km")
-sc700<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Subcuenca_c_700km")
-sc800<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Subcuenca_c_800")
-
-invent<-readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Inventarios_PI")
+### Set radios as **sqrt**(areas)  
+Important to achieve linear increase of area
+```{r radios, cache=T, dependson="summbasins"}
+radios <- sqrt(summ.basins["Median",]*1000000/pi)
 ```
 
-#### Climatic data in each buffer 
-```{r, tidy=T, eval=F}
-# calcular las áreas de cada polígono para todas las capas y después la mediana
-scs <- list("sc100"=sc100, "sc200"=sc200, "sc300"=sc300, "sc400"=sc400, "sc500"=sc500, "sc600"=sc600, "sc700"=sc700, "sc800"=sc800)
-
-aa <- sapply(scs, function(x){x@data$AREA_KM})
-# calculamos mediana de todas las áreas de cada escala
-med <- sapply(aa, median) # esto son AREAS
-radios <- sqrt(med/pi) # esto son DISTANCIAS =radios de buffers circulares
-
-# obtener coordenadas de las estaciones meteorologicas
-coorclim <- Climpoints@coords
-# obtener coordenadas de los centro de cada cuenca
-coorinvt <- as.matrix(data.frame("Lon"=invent@data[,3], "Lat"=invent@data[,2], row.names = invent@data$Tesela))
-
-# calcular distancia entre los centros de cada cuenca y cada estacion meteorologica
-pdist <- lapply(seq_along(1:nrow(coorinvt)), function(x){
-  spDistsN1(coorclim, as.numeric(coorinvt[x,]), longlat = T)
-})
-  
-# obtener las estaciones meteo q caen dentro de cada buffer de radio definido
-pclimbuff <-  lapply(radios, function(radio){
-  lapply(pdist, function(x) {which(x < radio)})
-})
+## Create GeoBuffers
+```{r creategbuffs, warning=F, cache=T, dependson=c("loaddata", "radios")}
+cinvm <- spTransform(cinv, CRS("+proj=utm +zone=30 +ellps=intl +units=m +no_defs"), verbose=F)
+gbfm <- sapply(radios, function(x){gBuffer(spgeom = cinvm, width = x , byid = T, quadsegs = 1000)})
 ```
+
+### Calculate geobuffers areas
+```{r gbfareas, cache=T, dependson="creategbuffs"}
+# transform polygons back to degrees
+gbf <- lapply(gbfm, spTransform, CRS("+proj=longlat"))
+gbf.areas <- -sapply(gbf, area)/1000000
+dim(gbf.areas); head(gbf.areas)
+# las áreas de los geobuffers de cada escala no son identicas
+# la desviación sobre la media es:
+apply(gbf.areas, 2, sd)/apply(gbf.areas, 2, mean)*100
+```
+
+## Visually test
+```{r plotgbf, out.width=1400, cache=T, dependson=c("loaddata","gbfareas")}
+par(mfrow=c(1,1), pty="s", mar=c(0,0,0,0), oma=c(0,0,0,0))
+plot(basins[[8]])
+invisible(lapply(gbf[1:8], function(scale){plot(scale[1:3], add=T)}))
+# points(cinv[1:3], pch=3)
+text(cinv[1:3], unique(inv$inv)[1:3])
+```
+
+### check linear increase of area
+```{r plotgbfareas, out.width=1400, cache=T, dependson="gbfareas"}
+par(mfrow=c(1,1))
+plot(c(gbf.areas[1:3,]))
+# plot(rep(1:8, each=3), c(gbf.areas))
+abline(h=gbf.areas[1,])
+```
+
+## Export geobuffers to .shp format
+### prepare for exporting
+```{r prepareexport, cache=T, dependson=c("gbfareas", "loaddata")}
+dfgbf <- lapply(gbf, function(scale){data.frame("polig.ID"=ninv)})
+dfgbf <- lapply(dfgbf, function(scale){rownames(scale) <- NULL; scale})
+# check number of points in each scale
+nrow(dfgbf[[1]])
+# rownames(dfgbf[[1]])
+# check names of scales
+# names(dfgbf)
+
+# Try to coerce to SpatialPolygonsDataFrame
+gbflist <- lapply(seq_along(gbf), function(scale){
+      SpatialPolygonsDataFrame(gbf[[scale]], dfgbf[[scale]], match.ID = F)})
+
+names(gbflist) <- paste0("scale.", 1:length(gbflist))
+```
+
+
+## write MULTIPLE shapefiles for future use
+```{r exportgbf, eval=F, cache=T, dependson="prepareexport"}
+lapply(seq_along(gbflist), function(scale){
+      writeOGR(gbflist[[scale]], dsn = 'GIS/', layer = paste0("geobuffers.", names(gbflist)[scale]), driver = "ESRI Shapefile")})
+```
+

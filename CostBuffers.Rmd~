@@ -26,7 +26,7 @@ coord <- readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local
 
 #crear capa de transición. TransitionFunction es el valor de las dos celdas
 #que están siendo conectadas. Directions es el nº de vecinos con el que conecta
-tr1 <- transition(x = mdt, transitionFunction = mean, directions = 8, symm=F)
+tr1 <- transition(x = mdt, transitionFunction = mean, directions = 4)
 
 #Convertir cooordenadas en spatial points
 coord1 <- SpatialPoints(coords = coord)
