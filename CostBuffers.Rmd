@@ -1,66 +1,83 @@
 ---
 title: "CostBuffers"
-author: "María"
-date: "20 de octubre de 2016"
+author: "María (modified by Indra)"
+date: "inicio: 20 de octubre de 2016"
 output: html_document
 ---
+Last version: `r Sys.Date()`
 
-# Create CostBuffers
-
-### Prepare data
+```{r, echo=F}
+library(knitr)
+opts_knit$set(root.dir ="/home/indra/Dropbox/carpeta sin título/Datos_Indra")
+# setwd("/home/indra/Dropbox/carpeta sin titulo/Carpeta_Indra")
+ori.par <- par()
 ```
-setwd("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Analisis_R")
 
-library(raster)
-library(gdistance)
-library(rgdal)
-library(dplyr)
-library(sp)
-library(rgeos)
-library(vegan)
-library(betapart)
-
-#load layers
-mdt <- raster("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS/mdt_100m_surPI.tif")
-coord <- readOGR(dsn = "/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/GIS", layer="Inventarios_PI")
-
-#crear capa de transición. TransitionFunction es el valor de las dos celdas
-#que están siendo conectadas. Directions es el nº de vecinos con el que conecta
-tr1 <- transition(x = mdt, transitionFunction = mean, directions = 8, symm=F)
-
-#Convertir cooordenadas en spatial points
-coord1 <- SpatialPoints(coords = coord)
-
-#cost distance
-cost <- costDistance(x = tr1, fromCoords = coord1, toCoords = coord1)
-
-#open data Calatayud (results.Rdata)
-#load("/Users/marialeomontes/Downloads/results.RData")
-#save.image("results2.RData")
-#de nuevo, esto último es temporal porque vamos a redefinir los parámetros, pero es como lo hemos hecho hasta ahora
-load("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/results2.RData")
+```{r set-options, echo=FALSE}
+options(width = 1400)
 ```
-### Buffers area
-Este primer paso es temporal, porque hay que volver a calcular el tamaño de los buffers de coste.
-Lo que ocurre es que en vez de dibujar un buffer y ver qué puntos caen dentro, como en los GeoBuffers, lo que tenemos es una matriz de distancias de coste de un inventario a otro. 
-El cálculo es poniendo una distancia de coste máxima, ver a que puntos se llega desde cada inventario, y esos son los que se incluyen dentro del buffer.
+
+# Load inputs
+### Load packages
+```{r loadpackages, tidy=T}
+# library(rgeos) # para calcular áreas etc
+library(raster) # para importar shapefiles etc
+# library(rgdal) # para cambiar proyecciones de capas etc
+library(gdistance) # para calcular
 ```
-#calcular el tamaño de los buffers de coste. De lo que hemos hecho en el archivo 5.-Area
-#de los buffers, tenemos que aumentar un 1.7% del coste máximo cada vez, es decir
-# w <- (1.7*max(cost))/100
-#w es para definir el umbral de los buffers
-w <- (1.7 * max(cost)) / 100
-ws <- w*1:8
 
-# hay que cargar lrich para poder poner los nombres antes del apply largo. 
-lrich <- read.csv("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/localrich_PI.csv", sep=";")
-colunames<-lrich[,1]
-colnames(cost) <- colunames
-rownames(cost) <- colunames
+### Load DEM (Digital Elevation Model)
+```{r}
+dem <- raster("GIS/DEMbasins.tif")
+```
 
-buffers <- lapply(ws, function(w){
-          apply(cost,2,function(x){
-                x<w})
-  })
+### Load INVENTARIOS
+```{r loadinventarios, cache=T}
+inv.raw <- read.table("inventarios.csv", header=T, sep=",")
+inv <- unique(inv.raw[,c("inv", "lon", "lat")])[,c("lon", "lat")]
+ninv <- unique(inv.raw$inv)
+rownames(inv) <- ninv
+# transform numeric format of inventarios coordinates to spatial object
+coordinates(inv) <- ~lon+lat
+proj4string(inv) <- CRS("+proj=longlat +datum=WGS84")
+```
+
+### Load CLIMA
+```{r loadclima, cache=T}
+climest.raw <- read.table("clima.estaciones.csv", header=T, sep=",")
+climest <- unique(climest.raw[,c("est", "lon", "lat")])[,c("lon", "lat")]
+nclimest <- unique(climest.raw$est)
+rownames(climest) <- nclimest
+# transform numeric format of inventarios coordinates to spatial object
+coordinates(climest) <- ~lon+lat
+proj4string(climest) <- CRS("+proj=longlat +datum=WGS84")
+```
+
+# Calculate
+### Create ASYMETRICAL transition layer
+```{r}
+# directions: es el nº de vecinos con el que conecta
+# symm: if moving A->B and B->A costs the same
+# transitionFunction: should be NOT-commutative such as f(i,j) != f(j,i)
+altDiff <- function(x){ x[1] - x[2] }
+mydir <- 4
+tr1 <- transition(x = dem, directions = mydir, symm=F, transitionFunction =altDiff)
+# tr1 <- geoCorrection(tr1)
+adj <- adjacent(dem, cells=1:ncell(dem), pairs=TRUE, directions=mydir)
+speed <- tr1
+up <- -1/1.5 # (-1/1.5) # cuanto más cerca de 1 menos penaliza la cuesta arriba
+flat <- 1
+down <- 2 # cuanto más cerca de 1 menos facilita la cuesta abajo
+# down/-up # veces más fácil bajar q subir
+speed[adj] <- ifelse(speed[adj]==0, flat,
+                     ifelse(speed[adj]<0, up * (speed[adj][speed[adj]<0]),
+                            ifelse(speed[adj]>0, down * (speed[adj][speed[adj]>0]), 0)))
+```
+
+### Calculate cost matrix
+```{r}
+cost.inv <- costDistance(x = speed, fromCoords = inv, toCoords = inv)
+write.table(cost.inv, file = "results/cost.all.csv", quote = F, sep = ",", row.names = T)
+# cost.cli <- costDistance(x = tr1, fromCoords = inv, toCoords = climest)
 ```
 

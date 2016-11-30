@@ -9,7 +9,7 @@ Last version: `r Sys.Date()`
 ```{r, echo=F}
 library(knitr)
 opts_knit$set(root.dir ="/home/indra/Dropbox/carpeta sin título/Datos_Indra")
-# setwd("/home/indra/Dropbox/carpeta sin título/Datos_Indra")
+# setwd("/home/indra/Dropbox/carpeta sin titulo/Carpeta_Indra/")
 ori.par <- par()
 ```
 
@@ -49,9 +49,9 @@ geos <- lapply(geos, function(scale){spTransform(scale, CRS("+proj=longlat +datu
 ```
 
 ### Load COSTMATRIX
-```{r loadinventarios, cache=T}
-cost <- read.table("costmatrix.csv", header=T, sep=",")
-rownames(cost) <- colnames(cost)
+```{r loadcost, cache=T}
+cost <- read.table("costmatrix.csv", header=T, sep=",", rownames=1)
+# rownames(cost) <- colnames(cost)
 cost.matrix <- as.matrix(cost)
 ```
 
@@ -83,8 +83,8 @@ knitr::knit("/home/indra/Documents/20161001.scales.riberas/myscrhits/FuncionesCa
 ```
 
 # Calculate
-### Select inventarios
-```{r subinv, cache=T, dependson=c("loadfunctions", "loadinventarios", "loadbasins")}
+### Select Inventarios
+```{r subinv, cache=T, dependson=c("loadfunctions", "loadinventarios", "loadbasins", "loadgeos", "loadcost")}
 # BASINS
 inv.bas <- subset.points(basins, inv)
 # GEOBUFFERS
@@ -101,18 +101,18 @@ thresholds <- 0.5+(0.82-0.5)/8*(0:7)
 inv.cos <- subset.cost(cost.matrix, thresholds)
 ```
 
-### Create COST HULLS
-```{r}
+### Create CostBuffers Convex Hulls
+```{r hulls, cache=T, dependson=c("loadfunctions", "subinv")}
 # NO existe AREA de los costbuffers, pq no existen poligonos
 # construir convex hulls para hallar el área mínima q abarcan los inventarios
 hulls.cos <- calc.ConvHull(inv.cos)
 ```
 
-### Select datos climáticos
+### Select Weather Stations
 De momento solo de estaciones climáticas  
 Pero para solventar los problemas de pools con pocos datos climáticos  
 se propuso usar el clima medido en las coordenadas de los inventarios
-```{r subcli, cache=T, dependson=c("loadfunctions", "loadclima", "loadbasins")}
+```{r subcli, cache=T, dependson=c("loadfunctions", "loadclima", "loadbasins", "loadgeos", "hulls")}
 # BASINS
 cli.bas <- subset.points(basins, climest)
 # GEOBUFFERS
@@ -123,7 +123,7 @@ cli.geo <- subset.points(geos, climest)
 cli.cos <- subset.points(hulls.cos, climest)
 ```
 
-### calc.RegRich(subinv)
+### Calculate Pool Richness
 ```{r regrich, cache=T, dependson=c("loadfunctions", "subinv")}
 invsp <- inv.raw[,c("inv", "sp")]
 invtab <- table(invsp)
@@ -135,7 +135,7 @@ regrich.geo <- calc.RegRich(inv.geo)
 regrich.cos <- calc.RegRich(inv.cos)
 ```
 
-### calculate Regional Area
+### Calculate Pool Area
 ```{r areas, message=F, cache=T, dependson=c("loadfunctions", "loadbasins", "loadgeos")}
 # BASINS
 area.bas <- calc.RegArea(basins)
@@ -155,7 +155,7 @@ sapply(area.geo, median)
 sapply(area.cos, median, na.rm=T)
 ```
 
-### calc.LocRich(inv)
+### Calculate Local Richness
 ```{r locrich, cache=T, dependson=c("loadfunctions", "loadinventarios")}
 # ALL 3 METHODS
 LocRich <- calc.LocRich(inv.raw)
@@ -163,7 +163,7 @@ LocRich <- calc.LocRich(inv.raw)
 # es decir el método es irrelevante
 ```
 
-# calc.intraBeta(subinv)
+### Calculate Intra-Pool beta diversity
 ```{r intrabeta, cache=T, dependson=c("loadfunctions", "subinv")}
 # BASINS
 intrabeta.bas <- calc.intraBeta(inv.bas)
@@ -173,7 +173,7 @@ intrabeta.geo <- calc.intraBeta(inv.geo)
 intrabeta.cos <- calc.intraBeta(inv.cos)
 ```
 
-# calc.interBeta(subinv)
+### Calculate Inter-Pool beta diversity for each scale
 ```{r interbeta, cache=T, dependson=c("loadfunctions", "subinv")}
 # BASINS
 interbeta.bas <- calc.interBeta(inv.bas)
@@ -183,7 +183,7 @@ interbeta.geo <- calc.interBeta(inv.geo)
 interbeta.cos <- calc.interBeta(inv.cos)
 ```
 
-### calc.RegClim(subclim)
+### Calculate Pool Climate Average
 ```{r regclim, cache=T, dependson=c("loadfunctions", "subcli")}
 # BASINS
 regcli.bas <- calc.RegClim(cli.bas)
@@ -199,36 +199,39 @@ regcli.cos <- lapply(seq_along(regcli.cos), function(scale){
 })
 ```
 
-
-
-# compact.regional(pools, loc, areas, reg, cli, betaintra, betainter)
-```{r results, cache=T, dependson=c("loadfunctions", "subinv", "locrich", "areas", "regrich", "subcli", "intrabeta", "interbeta")}
+# Compact results
+### Compact pool results
+```{r regres, cache=T, dependson=c("loadfunctions", "subinv", "locrich", "areas", "regrich", "subcli", "intrabeta", "interbeta")}
 # BASINS
 reg.bas <- compact.regional(areas=area.bas,
                               reg=regrich.bas,
                               cli=regcli.bas,
                               intrabeta=intrabeta.bas)
 
-loc.bas <- compact.local(regrich.bas, inv.bas, LocRich, area.bas, regcli.bas)
 # GEOBUFFERS
 reg.geo <- compact.regional(areas=area.geo,
                               reg=regrich.geo,
                               cli=regcli.geo,
                               intrabeta=intrabeta.geo)
 
-loc.geo <- compact.local(regrich.geo, inv.geo, LocRich, area.geo)
 # COSTBUFFERS
 reg.cos <- compact.regional(areas=area.cos,
                               reg=regrich.cos,
                               cli=regcli.cos,
                               intrabeta=intrabeta.cos)
+```
 
+### Compact local results
+```{r locres}
+loc.bas <- compact.local(regrich.bas, inv.bas, LocRich, area.bas, regcli.bas)
+loc.geo <- compact.local(regrich.geo, inv.geo, LocRich, area.geo, regcli.geo)
 loc.cos <- compact.local(regrich.cos, inv.cos, LocRich, area.cos, regcli.cos)
 ```
 
+
 # EXPORT RESULTS! :)
-```{r}
-save(reg.bas, loc.bas, interbeta.bas, file = "/resultados/res.basins.Rdata")
-save(reg.geo, loc.geo, interbeta.geo, file = "/resultados/res.geobuffers.Rdata")
-save(reg.cos, loc.cos, interbeta.cos, file = "/resultados/res.costbuffers.Rdata")
+```{r export, dependson=c("regres", "locres", "interbeta")}
+save(reg.bas, loc.bas, interbeta.bas, file = "res.basins.Rdata")
+save(reg.geo, loc.geo, interbeta.geo, file = "res.geobuffers.Rdata")
+save(reg.cos, loc.cos, interbeta.cos, file = "res.costbuffers.Rdata")
 ```

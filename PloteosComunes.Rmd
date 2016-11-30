@@ -20,14 +20,19 @@ options(width = 1400)
 # Load inputs
 ### Load packages
 ```{r loadpackages, tidy=T}
+library(rgeos) # para calcular áreas etc
+library(raster) # para importar shapefiles etc
+library(rgdal) # para cambiar proyecciones de capas etc
+library(vegan) # para calcular las riquezas
+library(betapart) # para calcular betas
 library(plyr) # para compactar resultados
 ```
 
 ### Load results: BASINS
 ```{r loadresbasins}
-load("/resultados/res.basins.Rdata")
-load("/resultados/res.geobuffers.Rdata")
-load("/resultados/res.costbuffers.Rdata")
+load("res.basins.Rdata")
+load("res.geobuffers.Rdata")
+load("res.costbuffers.Rdata")
 ```
 
 # calculate correlations
