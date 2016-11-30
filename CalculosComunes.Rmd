@@ -9,7 +9,7 @@ Last version: `r Sys.Date()`
 ```{r, echo=F}
 library(knitr)
 opts_knit$set(root.dir ="/home/indra/Dropbox/carpeta sin título/Datos_Indra")
-# setwd("/home/indra/Dropbox/carpeta sin titulo/Carpeta_Indra/")
+# setwd("/home/indra/Dropbox/carpeta sin titulo/")
 ori.par <- par()
 ```
 
@@ -50,7 +50,7 @@ geos <- lapply(geos, function(scale){spTransform(scale, CRS("+proj=longlat +datu
 
 ### Load COSTMATRIX
 ```{r loadcost, cache=T}
-cost <- read.table("costmatrix.csv", header=T, sep=",", rownames=1)
+cost <- read.table("costmatrix.csv", header=T, sep=",", row.names = 1)
 # rownames(cost) <- colnames(cost)
 cost.matrix <- as.matrix(cost)
 ```
@@ -79,7 +79,7 @@ proj4string(climest) <- CRS("+proj=longlat +datum=WGS84")
 
 ### Load FUNCTIONS
 ```{r loadfunctions, cache=T, results="hide", message=F}
-knitr::knit("/home/indra/Documents/20161001.scales.riberas/myscrhits/FuncionesCalculosComunes.Rmd")
+knitr::knit("/home/indra/Documents/20161001.scales.riberas/Scales-riberas-R/FuncionesCalculosComunes.Rmd")
 ```
 
 # Calculate
@@ -95,9 +95,9 @@ inv.geo <- subset.points(geos, inv)
 
 # SOLO PARA PROBAR
 # elijo aleatoriamente el quantil del 12.5%
-maxthresh <- quantile(c(cost.matrix), 0.06)
-# thresholds <- 0.5+(1:8)*maxthresh/8
-thresholds <- 0.5+(0.82-0.5)/8*(0:7)
+# maxthresh <- quantile(c(cost.matrix), 0.06)
+# thresholds <- 0.5+(0.82-0.5)/8*(0:7)
+thresholds <- 52+55/8*(0:7)
 inv.cos <- subset.cost(cost.matrix, thresholds)
 ```
 
@@ -231,7 +231,7 @@ loc.cos <- compact.local(regrich.cos, inv.cos, LocRich, area.cos, regcli.cos)
 
 # EXPORT RESULTS! :)
 ```{r export, dependson=c("regres", "locres", "interbeta")}
-save(reg.bas, loc.bas, interbeta.bas, file = "res.basins.Rdata")
-save(reg.geo, loc.geo, interbeta.geo, file = "res.geobuffers.Rdata")
-save(reg.cos, loc.cos, interbeta.cos, file = "res.costbuffers.Rdata")
+save(reg.bas, loc.bas, interbeta.bas, file = "results.local/res.basins.Rdata")
+save(reg.geo, loc.geo, interbeta.geo, file = "results.local/res.geobuffers.Rdata")
+save(reg.cos, loc.cos, interbeta.cos, file = "results.local/res.costbuffers.Rdata")
 ```
