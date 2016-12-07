@@ -1,11 +1,11 @@
 
-## Code for calculating SEMs at each scale
-# Since we are not able to work with more than one composite variable, 
-# we build 3 models: one without composites (to adjust the basic model),
-# one with a composite for the Climate -> RRich relationship and
-# another with a composite for the Climate -> LRich relationship.
-# The models with composite variables correspond to the block fit1 and fit2
-# in the SEM code.
+# Code for calculating SEMs at each scale
+### Since we are not able to work with more than one composite variable, 
+### we build 3 models: one without composites (to adjust the basic model),
+### one with a composite for the Climate -> RRich relationship and
+### another with a composite for the Climate -> LRich relationship.
+### The models with composite variables correspond to the block fit1 and fit2
+### in the SEM code.
 ``` {r, tidy=T}
 library(lavaan)
 library(dplyr)
