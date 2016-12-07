@@ -431,13 +431,13 @@ semPaths(fit8, layout="tree2",what="std")
 ```{r, tidy=T}
 res <- read.csv("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Results/Results_SEMbasins.csv", header=T, sep=";", row.names = 1)
 
-par(mfrow=c(1,2),mar=c(2,3,1,2), oma=c(0,0,0,0))
+par(mfrow=c(2,1),mar=c(2,3,1,2), oma=c(0,0,0,0))
 plot(x=c(1:8), y=res$climRr, main="SEM path values", type = "o", col="black", ylim=c(-1.4,0.5), xlab="Scale")
 lines(x=c(1:8), y=res$climLr, type="o", col="red")
 lines(x=c(1:8), y=res$RrLr, type="o", col="blue")
-legend("bottomright", legend= c("Clim -> Rrich", "Clim -> Lrich", "Rrich -> Lrich"), col=c("black", "red", "blue"),lty=1:2, cex = 0.8)
+legend("bottomright", legend= c("Clim -> Rrich", "Clim -> Lrich", "Rrich -> Lrich"), col=c("black", "red", "blue"),lty=1, cex = 0.7, bty = "n", text.width=1)
 
 plot(x=c(1:8), y=res$r2Rr, main="R2", type = "o", col="black", ylim=c(0,1), xlab="Scale")
 lines(x=c(1:8), y=res$r2Lr, type="o", col="red")
-legend("topright", legend= c("R2 Rrich", "R2 Lrich"), col=c("black", "red"),lty=1:2, cex = 0.8)
+legend("topright", legend= c("R2 Rrich", "R2 Lrich"), col=c("black", "red"),lty=1, cex = 0.7, bty = "n")
 
