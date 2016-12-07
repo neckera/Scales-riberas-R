@@ -1,0 +1,421 @@
+library(lavaan)
+library(dplyr)
+library(semPlot)
+
+``` {r, tidy=T}
+
+#load data
+load("/Users/marialeomontes/Downloads/loc.bas.Rdata")
+loc.bas.indra <- loc.bas
+
+#save all r2
+r2 <- c(0,0,0,0,0,0,0,0)
+# Scale 1 ####
+#model fit
+bd <- loc.bas.indra[[1]]
+bdscaled <- scale(bd[3:9])
+richSEM1 <- '
+  #measurement model
+
+  #opcion variable compuesta 1 (fit1)
+  climR <~ 1*pa +pcq + tcqm + tam
+  regrich ~ climR
+  locrich ~ tcqm
+  locrich ~ tam
+
+  #opcion variable compuesta 2 (fit2)
+  # climL <~ tcqm + 1*tam
+  # locrich ~ climL
+  # regrich ~ tam
+  # regrich ~ tcqm
+  # regrich ~ pa
+  # regrich ~ pcq
+  
+  #regresiones
+  locrich ~ regrich
+  
+  #correlations
+  tam ~~ pa
+  tam ~~ tcqm
+  tam ~~ pcq
+  pa ~~ tcqm
+  pa ~~ pcq
+  pcq ~~ tcqm
+  
+'
+
+fit1 <- sem(model = richSEM1, data = bdscaled, fixed.x = FALSE, std.lv= T)
+summary(fit1, standardized=TRUE)
+
+# show coefficients
+coef(fit1)
+
+#show R-squared
+r2[1] <- inspect(fit1, 'r2')
+
+#show modification indexes
+mod_ind1 <- modindices(fit1)
+# 10 greatest modind
+head(mod_ind1[order(mod_ind1$mi, decreasing=TRUE), ], 10)
+
+#plot SEM
+semPaths(fit1, layout="tree2",what="std")
+```
+# Scale 2 ####
+``` {r, tidy=T}
+bd <- loc.bas.indra[[2]]
+bdscaled <- scale(bd[3:9])
+richSEM2 <- '
+  #measurement model
+
+  #opcion variable compuesta 1 (fit1)
+  climR <~ 1*pa +pcq + tcqm + tam
+  regrich ~ climR
+  locrich ~ tcqm
+  locrich ~ tam
+
+  #opcion variable compuesta 2 (fit2)
+  # climL <~ tcqm + 1*tam
+  # locrich ~ climL
+  # regrich ~ tam
+  # regrich ~ tcqm
+  # regrich ~ pa
+  # regrich ~ pcq
+  
+  #regresiones
+  locrich ~ regrich
+
+  #correlations
+  tam ~~ pa
+  tam ~~ tcqm
+  tam ~~ pcq
+  pa ~~ tcqm
+  pa ~~ pcq
+  pcq ~~ tcqm
+
+'
+
+fit2 <- sem(richSEM2, data=bdscaled, fixed.x=FALSE)
+summary(fit2, standardized=TRUE)
+
+# show coefficients
+coef(fit2)
+
+#show R-squared
+r2[2] <- inspect(fit2, 'r2')
+
+#show modification indexes
+mod_ind <- modindices(fit2)
+# 10 greatest modind
+head(mod_ind2[order(mod_ind2$mi, decreasing=TRUE), ], 10)
+
+#plot SEM
+semPaths(fit2, layout="tree2",what="std")
+```
+# Scale 3####
+```{r, tidy=T}
+bd <- loc.bas.indra[[3]]
+bdscaled <- scale(bd[3:9])
+richSEM3 <- '
+  #measurement model
+
+  #opcion variable compuesta 1 (fit1)
+  climR <~ 1*pa +pcq + tcqm + tam
+  regrich ~ climR
+  locrich ~ tcqm
+  locrich ~ tam
+
+  #opcion variable compuesta 2 (fit2)
+#   climL <~ 1*tcqm + tam
+#   locrich ~ climL
+#   regrich ~ tam
+#   regrich ~ tcqm
+#   regrich ~ pa
+#   regrich ~ pcq
+   
+  #regresiones
+  locrich ~ regrich
+
+  #correlations
+  tam ~~ pa
+  tam ~~ tcqm
+  tam ~~ pcq
+  pa ~~ tcqm
+  pa ~~ pcq
+  pcq ~~ tcqm
+
+'
+
+fit3 <- sem(richSEM3, data=bdscaled, fixed.x=FALSE)
+summary(fit3, standardized=TRUE)
+
+# show coefficients
+coef(fit3)
+
+#show R-squared
+r2[3] <- inspect(fit3, 'r2')
+
+#show modification indexes
+mod_ind3 <- modindices(fit3)
+# 10 greatest modind
+head(mod_ind3[order(mod_ind3$mi, decreasing=TRUE), ], 10)
+
+#plot SEM
+semPaths(fit3, layout="tree2",what="std")
+```
+# Scale 4 ####
+```{r, tidy=T}
+bd <- loc.bas.indra[[4]]
+bdscaled <- scale(bd[3:9])
+richSEM4 <- '
+  #measurement model
+
+  #opcion variable compuesta 1 (fit1)
+#   climR <~ 1*pa +pcq + tcqm + tam
+#   regrich ~ climR
+#   locrich ~ tcqm
+#   locrich ~ tam
+
+  #opcion variable compuesta 2 (fit2)
+  climL <~ 1*tcqm + tam
+  locrich ~ climL
+  regrich ~ tam
+  regrich ~ tcqm
+  regrich ~ pa
+  regrich ~ pcq
+   
+  #regresiones
+  locrich ~ regrich
+
+  #correlations
+  tam ~~ pa
+  tam ~~ tcqm
+  tam ~~ pcq
+  pa ~~ tcqm
+  pa ~~ pcq
+  pcq ~~ tcqm
+
+'
+
+fit4 <- sem(richSEM4, data=bdscaled, fixed.x=FALSE)
+summary(fit4, standardized=TRUE)
+
+# show coefficients
+coef(fit4)
+
+#show R-squared
+r2[4] <- inspect(fit4, 'r2')
+
+#show modification indexes
+mod_ind <- modindices(fit)
+# 10 greatest modind
+head(mod_ind[order(mod_ind$mi, decreasing=TRUE), ], 10)
+
+#plot SEM
+semPaths(fit, layout="tree2",what="std")
+```
+# Scale 5 ####
+```{r, tidy=T}
+bd <- loc.bas.indra[[5]]
+bdscaled <- scale(bd[3:9])
+richSEM5 <- '
+  #measurement model
+
+    #opcion variable compuesta 1 (fit1)
+  climR <~ 1*pa +pcq + tcqm + tam
+  regrich ~ climR
+  locrich ~ tcqm
+  locrich ~ tam
+
+  #opcion variable compuesta 2 (fit2)
+#   climL <~ 1*tcqm + tam
+#   locrich ~ climL
+#   regrich ~ tam
+#   regrich ~ tcqm
+#   regrich ~ pa
+#   regrich ~ pcq
+   
+  #regresiones
+  locrich ~ regrich
+
+
+  #correlations
+  tam ~~ pa
+  tam ~~ tcqm
+  tam ~~ pcq
+  pa ~~ tcqm
+  pa ~~ pcq
+  pcq ~~ tcqm
+
+'
+
+fit5 <- sem(richSEM5, data=bdscaled, fixed.x=FALSE)
+summary(fit5, standardized=TRUE)
+
+# show coefficients
+coef(fit5)
+
+#show R-squared
+r2[5] <- inspect(fit5, 'r2')
+
+#show modification indexes
+mod_ind5 <- modindices(fit5)
+# 10 greatest modind
+head(mod_ind5[order(mod_ind5$mi, decreasing=TRUE), ], 10)
+
+#plot SEM
+semPaths(fit5, layout="tree2",what="std")
+
+# Scale 6####
+bd <- loc.bas.indra[[6]]
+bdscaled <- scale(bd[3:9])
+richSEM6 <- '
+  #measurement model
+
+  #opcion variable compuesta 1 (fit1)
+  climR <~ 1*pa +pcq + tcqm + tam
+  regrich ~ climR
+  locrich ~ tcqm
+  locrich ~ tam
+
+  #opcion variable compuesta 2 (fit2)
+#   climL <~ 1*tcqm + tam
+#   locrich ~ climL
+#   regrich ~ tam
+#   regrich ~ tcqm
+#   regrich ~ pa
+#   regrich ~ pcq
+   
+  #regresiones
+  locrich ~ regrich
+
+  #correlations
+  tam ~~ pa
+  tam ~~ tcqm
+  tam ~~ pcq
+  pa ~~ tcqm
+  pa ~~ pcq
+  pcq ~~ tcqm
+
+'
+
+fit6 <- sem(richSEM6, data=bdscaled, fixed.x=FALSE)
+summary(fit6, standardized=TRUE)
+
+# show coefficients
+coef(fit6)
+
+#show R-squared
+r2[6] <- inspect(fit6, 'r2')
+
+#show modification indexes
+mod_ind <- modindices(fit6)
+# 10 greatest modind
+head(mod_ind[order(mod_ind$mi, decreasing=TRUE), ], 10)
+
+#plot SEM
+semPaths(fit6, layout="tree2",what="std")
+```
+# Scale 7####
+```{r, tidy=T}
+bd <- loc.bas.indra[[7]]
+bdscaled <- scale(bd[3:9])
+richSEM7 <- '
+  #measurement model
+
+  #opcion variable compuesta 1 (fit1)
+#   climR <~ 1*pa +pcq + tcqm + tam
+#   regrich ~ climR
+#   locrich ~ tcqm
+#   locrich ~ tam
+
+  #opcion variable compuesta 2 (fit2)
+  climL <~ 1*tcqm + tam
+  locrich ~ climL
+  regrich ~ tam
+  regrich ~ tcqm
+  regrich ~ pa
+  regrich ~ pcq
+ 
+ #regresiones
+  locrich ~ regrich
+   
+  #correlations
+  tam ~~ pa
+  tam ~~ tcqm
+  tam ~~ pcq
+  pa ~~ tcqm
+  pa ~~ pcq
+  pcq ~~ tcqm
+
+'
+
+fit7 <- sem(richSEM7, data=bdscaled, fixed.x=FALSE)
+summary(fit7, standardized=TRUE)
+
+# show coefficients
+coef(fit7)
+
+#show R-squared
+r2[7] <- inspect(fit7, 'r2')
+
+#show modification indexes
+mod_ind <- modindices(fit7)
+# 10 greatest modind
+head(mod_ind[order(mod_ind$mi, decreasing=TRUE), ], 10)
+
+#plot SEM
+semPaths(fit7, layout="tree2",what="std")
+```
+# Scale 8####
+```{r, tidy=T}
+bd <- loc.bas.indra[[8]]
+bdscaled <- scale(bd[3:9])
+richSEM8 <- '
+#measurement model
+ 
+ #opcion variable compuesta 1 (fit1)
+  climR <~ 1*pa +pcq + tcqm + tam
+  regrich ~ climR
+  locrich ~ tcqm
+  locrich ~ tam
+
+  #opcion variable compuesta 2 (fit2)
+#   climL <~ 1*tcqm + tam
+#   locrich ~ climL
+#   regrich ~ tam
+#   regrich ~ tcqm
+#   regrich ~ pa
+#   regrich ~ pcq
+
+  #regresiones
+  locrich ~ regrich
+
+  #correlations
+  tam ~~ pa
+  tam ~~ tcqm
+  tam ~~ pcq
+  pa ~~ tcqm
+  pa ~~ pcq
+  pcq ~~ tcqm
+
+'
+
+fit8 <- sem(richSEM8, data=bdscaled, fixed.x=FALSE)
+summary(fit8, standardized=TRUE)
+
+# show coefficients
+coef(fit8)
+
+#show R-squared
+r2[8] <- inspect(fit8, 'r2')
+
+#show modification indexes
+mod_ind <- modindices(fit8)
+# 10 greatest modind
+head(mod_ind[order(mod_ind$mi, decreasing=TRUE), ], 10)
+
+#plot SEM
+semPaths(fit8, layout="tree2",what="std")
+
+```
