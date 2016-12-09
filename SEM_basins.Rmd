@@ -2,7 +2,6 @@
 title: "SEMs at each scale"
 author: "María (modified by Indra)"
 date: "inicio: 05 de diciembre de 2016"
-output: html_document
 ---
 Last version: `r Sys.Date()`
 
