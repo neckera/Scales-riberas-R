@@ -96,8 +96,8 @@ inv.geo <- subset.points(geos, inv)
 # SOLO PARA PROBAR
 # elijo aleatoriamente el quantil del 12.5%
 # maxthresh <- quantile(c(cost.matrix), 0.06)
-# thresholds <- 0.5+(0.82-0.5)/8*(0:7)
-thresholds <- 52+55/8*(0:7)
+# thresholds <- 52+55/8*(0:7)
+thresholds <- 51.6+55/8*(0:7)
 inv.cos <- subset.cost(cost.matrix, thresholds)
 ```
 
@@ -106,21 +106,6 @@ inv.cos <- subset.cost(cost.matrix, thresholds)
 # NO existe AREA de los costbuffers, pq no existen poligonos
 # construir convex hulls para hallar el área mínima q abarcan los inventarios
 hulls.cos <- calc.ConvHull(inv.cos)
-```
-
-### Select Weather Stations
-De momento solo de estaciones climáticas  
-Pero para solventar los problemas de pools con pocos datos climáticos  
-se propuso usar el clima medido en las coordenadas de los inventarios
-```{r subcli, cache=T, dependson=c("loadfunctions", "loadclima", "loadbasins", "loadgeos", "hulls")}
-# BASINS
-cli.bas <- subset.points(basins, climest)
-# GEOBUFFERS
-cli.geo <- subset.points(geos, climest)
-# COSTBUFFERS
-# los costbuffers no se usan para filtrar, pq no existen poligonos
-# se seleccionan las estaciones climáticas q están por debajo de cierta distancia de coste desde el inventario original
-cli.cos <- subset.points(hulls.cos, climest)
 ```
 
 ### Calculate Pool Richness
@@ -146,13 +131,33 @@ area.geo <- calc.RegArea(geos)
 # NO existe AREA de los costbuffers, pq no existen poligonos
 # por eso se usan convex hulls para hallar el área mínima q abarcan los inventarios
 area.cos <- calc.RegArea(hulls.cos)
+# se "purgan" los convex hulls por área mínima de cada escala (100:800km²)
 area.cos <- lapply(seq_along(area.cos), function(scale){
+      area.cos[[scale]][area.cos[[scale]]<scale*100] <- NA
       dummy <- rep(NA, length(regrich.cos[[scale]]))
       dummy[1:662 %in% gsub("[1-8]\\.", "", hulls.cos[[scale]]@data$N)] <- area.cos[[scale]]
       return(dummy)
 })
-sapply(area.geo, median)
-sapply(area.cos, median, na.rm=T)
+
+# comparar medianas
+# sapply(area.bas, median)
+# sapply(area.geo, median)
+# sapply(area.cos, median, na.rm=T)
+```
+
+### Select Weather Stations
+De momento solo de estaciones climáticas  
+Pero para solventar los problemas de pools con pocos datos climáticos  
+se propuso usar el clima medido en las coordenadas de los inventarios
+```{r subcli, cache=T, dependson=c("loadfunctions", "loadclima", "loadbasins", "loadgeos", "hulls")}
+# BASINS
+cli.bas <- subset.points(basins, climest)
+# GEOBUFFERS
+cli.geo <- subset.points(geos, climest)
+# COSTBUFFERS
+# finalmente se decidió usar los convexhulls para seleccionar el clima de cada pool
+# así nos aseguramos q usamos el mismo área usada para calcular poolrich y clima
+cli.cos <- subset.points(hulls.cos, climest)
 ```
 
 ### Calculate Local Richness

@@ -1,12 +1,27 @@
+---
+title: "SEMs at each scale"
+author: "María (modified by Indra)"
+date: "inicio: 05 de diciembre de 2016"
+output: html_document
+---
+Last version: `r Sys.Date()`
 
-# Code for calculating SEMs at each scale
+```{r, echo=F}
+library(knitr)
+# setwd("/home/indra/Dropbox/carpeta sin titulo/")
+ori.par <- par()
+options(width = 1400)
+```
+
 Since we are not able to work with more than one composite variable, 
 we build 3 models: one without composites (to adjust the basic model),
 one with a composite for the Climate -> RRich relationship and
 another with a composite for the Climate -> LRich relationship.
 The models with composite variables correspond to the block fit1 and fit2
 in the SEM code.
-``` {r, tidy=T}
+
+### Load data and libraries
+```{r, tidy=T}
 library(lavaan)
 library(dplyr)
 library(semPlot)
@@ -17,7 +32,10 @@ loc.bas.indra <- loc.bas
 
 #save all r2
 r2 <- c(0,0,0,0,0,0,0,0)
-# Scale 1 ####
+```
+ 
+### Scale 1
+```{r, tidy=T}
 #model fit
 bd <- loc.bas.indra[[1]]
 bdscaled <- scale(bd[3:9])
@@ -67,9 +85,10 @@ head(mod_ind1[order(mod_ind1$mi, decreasing=TRUE), ], 10)
 
 #plot SEM
 semPaths(fit1, layout="tree2",what="std")
+```
  
-# Scale 2 ####
-
+### Scale 2
+```{r, tidy=T}
 bd <- loc.bas.indra[[2]]
 bdscaled <- scale(bd[3:9])
 richSEM2 <- '
@@ -112,15 +131,16 @@ coef(fit2)
 r2[2] <- inspect(fit2, 'r2')
 
 #show modification indexes
-mod_ind <- modindices(fit2)
+mod_ind2 <- modindices(fit2)
 # 10 greatest modind
 head(mod_ind2[order(mod_ind2$mi, decreasing=TRUE), ], 10)
 
 #plot SEM
 semPaths(fit2, layout="tree2",what="std")
+```
  
-# Scale 3####
-
+### Scale 3
+```{r, tidy=T}
 bd <- loc.bas.indra[[3]]
 bdscaled <- scale(bd[3:9])
 richSEM3 <- '
@@ -169,9 +189,10 @@ head(mod_ind3[order(mod_ind3$mi, decreasing=TRUE), ], 10)
 
 #plot SEM
 semPaths(fit3, layout="tree2",what="std")
+```
  
-# Scale 4 ####
-
+### Scale 4
+```{r, tidy=T}
 bd <- loc.bas.indra[[4]]
 bdscaled <- scale(bd[3:9])
 richSEM4 <- '
@@ -214,15 +235,16 @@ coef(fit4)
 r2[4] <- inspect(fit4, 'r2')
 
 #show modification indexes
-mod_ind <- modindices(fit)
+mod_ind4 <- modindices(fit4)
 # 10 greatest modind
-head(mod_ind[order(mod_ind$mi, decreasing=TRUE), ], 10)
+head(mod_ind4[order(mod_ind4$mi, decreasing=TRUE), ], 10)
 
 #plot SEM
-semPaths(fit, layout="tree2",what="std")
+semPaths(fit4, layout="tree2",what="std")
+```
  
-# Scale 5 ####
-
+### Scale 5
+```{r, tidy=T}
 bd <- loc.bas.indra[[5]]
 bdscaled <- scale(bd[3:9])
 richSEM5 <- '
@@ -272,8 +294,10 @@ head(mod_ind5[order(mod_ind5$mi, decreasing=TRUE), ], 10)
 
 #plot SEM
 semPaths(fit5, layout="tree2",what="std")
-
-# Scale 6####
+```
+ 
+### Scale 6
+```{r, tidy=T}
 bd <- loc.bas.indra[[6]]
 bdscaled <- scale(bd[3:9])
 richSEM6 <- '
@@ -316,15 +340,16 @@ coef(fit6)
 r2[6] <- inspect(fit6, 'r2')
 
 #show modification indexes
-mod_ind <- modindices(fit6)
+mod_ind6 <- modindices(fit6)
 # 10 greatest modind
-head(mod_ind[order(mod_ind$mi, decreasing=TRUE), ], 10)
+head(mod_ind6[order(mod_ind6$mi, decreasing=TRUE), ], 10)
 
 #plot SEM
 semPaths(fit6, layout="tree2",what="std")
+```
  
-# Scale 7####
-
+### Scale 7
+```{r, tidy=T}
 bd <- loc.bas.indra[[7]]
 bdscaled <- scale(bd[3:9])
 richSEM7 <- '
@@ -367,15 +392,16 @@ coef(fit7)
 r2[7] <- inspect(fit7, 'r2')
 
 #show modification indexes
-mod_ind <- modindices(fit7)
+mod_ind7 <- modindices(fit7)
 # 10 greatest modind
-head(mod_ind[order(mod_ind$mi, decreasing=TRUE), ], 10)
+head(mod_ind7[order(mod_ind7$mi, decreasing=TRUE), ], 10)
 
 #plot SEM
 semPaths(fit7, layout="tree2",what="std")
+```
  
-# Scale 8####
-
+### Scale 8
+```{r, tidy=T}
 bd <- loc.bas.indra[[8]]
 bdscaled <- scale(bd[3:9])
 richSEM8 <- '
@@ -418,13 +444,12 @@ coef(fit8)
 r2[8] <- inspect(fit8, 'r2')
 
 #show modification indexes
-mod_ind <- modindices(fit8)
+mod_ind8 <- modindices(fit8)
 # 10 greatest modind
-head(mod_ind[order(mod_ind$mi, decreasing=TRUE), ], 10)
+head(mod_ind8[order(mod_ind8$mi, decreasing=TRUE), ], 10)
 
 #plot SEM
 semPaths(fit8, layout="tree2",what="std")
-
 ```
 
 ## Plots
@@ -432,6 +457,7 @@ semPaths(fit8, layout="tree2",what="std")
 res <- read.csv("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Results/Results_SEMbasins.csv", header=T, sep=";", row.names = 1)
 
 par(mfrow=c(2,1),mar=c(2,3,1,2), oma=c(0,0,0,0))
+
 plot(x=c(1:8), y=res$climRr, main="SEM path values", type = "o", col="black", ylim=c(-1.4,0.5), xlab="Scale")
 lines(x=c(1:8), y=res$climLr, type="o", col="red")
 lines(x=c(1:8), y=res$RrLr, type="o", col="blue")
@@ -440,4 +466,4 @@ legend("bottomright", legend= c("Clim -> Rrich", "Clim -> Lrich", "Rrich -> Lric
 plot(x=c(1:8), y=res$r2Rr, main="R2", type = "o", col="black", ylim=c(0,1), xlab="Scale")
 lines(x=c(1:8), y=res$r2Lr, type="o", col="red")
 legend("topright", legend= c("R2 Rrich", "R2 Lrich"), col=c("black", "red"),lty=1, cex = 0.7, bty = "n")
-
+```

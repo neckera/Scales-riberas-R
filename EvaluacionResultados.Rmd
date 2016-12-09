@@ -1,0 +1,155 @@
+---
+title: "Evaluación de resultados"
+author: "Indra"
+date: "inicio: 05 de diciembre de 2016"
+output: html_document
+---
+Last version: `r Sys.Date()`
+
+```{r, echo=F}
+library(knitr)
+# opts_knit$set(root.dir ="/home/indra/Dropbox/carpeta sin título/Datos_Indra")
+setwd("/home/indra/Dropbox/carpeta sin titulo/results.CCC/")
+ori.par <- par()
+```
+
+```{r set-options, echo=FALSE}
+options(width = 1400)
+```
+
+# Load inputs
+### Load packages
+```{r loadpackages, tidy=T}
+# library(rgeos) # para calcular áreas etc
+# library(raster) # para importar shapefiles etc
+# library(rgdal) # para cambiar proyecciones de capas etc
+# library(vegan) # para calcular las riquezas
+# library(betapart) # para calcular betas
+library(plyr) # para compactar resultados
+```
+
+### Load results: BASINS
+```{r loadresbasins}
+load("res.basins.Rdata")
+load("res.geobuffers.Rdata")
+load("res.costbuffers.Rdata")
+```
+
+# calculate correlations
+```{r, echo=F}
+cor.bas <- ddply(reg.bas, .(scale), summarize,
+              area.med = median(area),
+              cor.reg.tam = cor(tam, regrich, use="complete"),
+              cor.reg.tcqm = cor(tcqm, regrich, use="complete"),
+              cor.reg.pa = cor(pa, regrich, use="complete"),
+              cor.reg.pcq = cor(pcq, regrich, use="complete")
+              )
+# GEOBUFFERS
+cor.geo <- ddply(reg.geo, .(scale), summarize,
+              area.med = median(area),
+              cor.reg.tam = cor(tam, regrich, use="complete"),
+              cor.reg.tcqm = cor(tcqm, regrich, use="complete"),
+              cor.reg.pa = cor(pa, regrich, use="complete"),
+              cor.reg.pcq = cor(pcq, regrich, use="complete")
+              )
+# COSTBUFFERS
+cor.cos <- ddply(reg.cos, .(scale), summarize,
+              area.med = median(area, na.rm = T),
+              cor.reg.tam = cor(tam, regrich, use="complete"),
+              cor.reg.tcqm = cor(tcqm, regrich, use="complete"),
+              cor.reg.pa = cor(pa, regrich, use="complete"),
+              cor.reg.pcq = cor(pcq, regrich, use="complete")
+              )
+```
+
+DESIGN FUNCTION: how much data do we have for each pool?
+```{r}
+# comprobar q las areas de los hulls.cos están por encima del limite de la escala
+# es decir, 
+# en la escala 1 todos los poligonos deberian estar por encima de 100km²
+# en la escala 2 todos los poligonos deberian estar por encima de 200km²
+# en la escala 8 todos los poligonos deberian estar por encima de 800km²
+
+res.eval <- function(reg.res){
+      reg.list <- split(reg.res, f=reg.res$scale)
+      sapply(seq_along(reg.list), function(scale.num){
+      scale <- reg.list[[scale.num]]
+      all <- nrow(scale)
+      rich.nas <- length(which(is.na(scale$regrich)))
+      area.nas <- length(which(is.na(scale$area)))
+      clima.nas <- length(which(is.na(scale$tam)))
+      intrabeta.nas <- length(which(is.na(scale$intraBeta.tur)))
+    
+      area.artf <- length(which(scale$area<scale.num*100))  
+      # area.artf <- length(which(scale$area[!is.na(scale$area)]<(scale.num*100)))
+      
+      return(c("all"=all, "rich.nas"=rich.nas, "area.nas"=area.nas, "clima.nas"=clima.nas, "intrabeta.nas"=intrabeta.nas, "area.artf"=area.artf))
+})
+}
+
+
+# para QUITAR los COSTpools q no cumplen!
+yy <- lapply(seq_along(zz), function(scale){zz[[scale]][zz[[scale]]$area>scale*100,]})
+reg.cos.sup <- do.call(rbind, yy)
+
+area.cos.sup <- sapply(yy, function(scale){median(scale$area, na.rm=T)})
+
+# comparar medianas
+cor.bas$area.med
+cor.cos$area.med
+area.cos.sup
+```
+
+EXECUTE FUNCTION: how much data do we have for each pool?
+```{r}
+# BASINS
+the.bas <- res.eval(reg.bas)[1,]
+nas.bas <- res.eval(reg.bas)[-1,]
+use.bas <- t(apply(nas.bas, 1, function(fila){the.bas - fila}))
+puse.bas <- t(apply(use.bas, 1, function(fila){round(100* fila / the.bas, 2)}))
+use.the.bas <- t(apply(use.bas, 1, function(fila){paste0(fila, " (", the.bas, ")")}))
+write.table(use.the.bas, "/home/indra/Dropbox/carpeta sin titulo/results.local/eval.bas.csv", sep=";", quote = F, row.names = T)
+
+write.table(puse.bas, "/home/indra/Dropbox/carpeta sin titulo/results.local/peval.bas.csv", sep=";", quote = F, row.names = T)
+
+# GEOBUFFERS
+the.geo <- res.eval(reg.geo)[1,]
+nas.geo <- res.eval(reg.geo)[-1,]
+use.geo <- t(apply(nas.geo, 1, function(fila){the.geo - fila}))
+puse.geo <- t(apply(use.geo, 1, function(fila){round(100* fila / the.geo, 2)}))
+use.the.geo <- t(apply(use.geo, 1, function(fila){paste0(fila, " (", the.geo, ")")}))
+write.table(use.the.geo, "/home/indra/Dropbox/carpeta sin titulo/results.local/eval.geo.csv", sep=";", quote = F, row.names = T)
+
+write.table(puse.geo, "/home/indra/Dropbox/carpeta sin titulo/results.local/peval.geo.csv", sep=";", quote = F, row.names = T)
+
+# COSTBUFFERS
+the.cos <- res.eval(reg.cos)[1,]
+nas.cos <- res.eval(reg.cos)[-1,]
+use.cos <- t(apply(nas.cos, 1, function(fila){the.cos - fila}))
+puse.cos <- t(apply(use.cos, 1, function(fila){round(100* fila / the.cos, 2)}))
+use.the.cos <- t(apply(use.cos, 1, function(fila){paste0(fila, " (", the.cos, ")")}))
+write.table(use.the.cos, "/home/indra/Dropbox/carpeta sin titulo/results.local/eval.cos.csv", sep=";", quote = F, row.names = T)
+
+write.table(puse.cos, "/home/indra/Dropbox/carpeta sin titulo/results.local/peval.cos.csv", sep=";", quote = F, row.names = T)
+```
+
+PLOT: how much data do we have for each pool?
+```{r}
+par(mfrow=c(1,1))
+plot(cor.bas$area.med, puse.bas, ylim=c(0,100), type="o", ylab="% data used", xlab="area (km²)")
+lines(cor.geo$area.med, perc.clim.na.geo, lty=2, type="o")
+lines(cor.cos$area.med, perc.clim.na.cos, lty=3, type="o")
+text(expand.grid(cor.geo$area.med[1], c(perc.clim.na.bas[1],perc.clim.na.geo[1],perc.clim.na.cos[1])), labels=c("bas", "geo", "cos"), pos=3)
+```
+
+PLOT: which pools have less than 3 inventarios
+```{r}
+scale <- 6
+par(mar=c(0,0,3,0))
+plot(basins[[scale]], col="yellow", main="numero de inventarios")
+mtext(paste0("(scale ", scale,")"))
+plot(polygons(basins[[scale]])[3>sapply(inv.bas, sapply, length)[[scale]]], col="blue", add=T)
+polygonsLabel(pols = basins[[scale]], labels = as.numeric(sapply(inv.bas, sapply, length)[[scale]]), col="black", cex=1, method="centroid", doPlot = T)
+points(inv, pch="+")
+```
+
