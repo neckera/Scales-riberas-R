@@ -8,8 +8,8 @@ Last version: `r Sys.Date()`
 
 ```{r, echo=F}
 library(knitr)
-opts_knit$set(root.dir ="/home/indra/Dropbox/carpeta sin título/Datos_Indra")
-# setwd("/home/indra/Dropbox/carpeta sin titulo/results.local/")
+# opts_knit$set(root.dir ="/home/indra/Dropbox/carpeta sin título/Datos_Indra")
+setwd("/home/ngmedina/indra/results")
 ori.par <- par()
 ```
 
@@ -76,6 +76,9 @@ cor.cos <- ddply(reg.cos, .(scale), summarize,
 
 # plot REGIONAL richness
 ```{r}
+# postscript(file = "/home/ngmedina/indra/results/all.plots.eps", horizontal = F, paper = "special", width = 12, height = 9)
+pdf(file = "/home/ngmedina/indra/results/all.plots.pdf", paper = "special", width = 12, height = 9)
+
 par(mfcol=c(2,3), mar=c(2,4,2,0.5), oma=c(1,0,0,0))
 # basins
 # boxplot(reg.bas$regrich ~ reg.bas$scale, ylab="richness", main="Basins")
@@ -253,4 +256,6 @@ text(x=cor.cos$area.med, y=1, labels=paste0("",sapply(split(reg.cos$intraBeta.to
 # lines(area.cos, interbeta.cos$interBeta.tur, type="o", lty=1)
 # lines(area.cos, interbeta.cos$interBeta.nes, type="o", lty=2)
 # legend("left", lwd=c(2,1,1), lty=c(1,1,2), legend = c("total", "turnover", "nestedness"), bty="n", cex=0.8)
+
+dev.off()
 ```

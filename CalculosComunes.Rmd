@@ -8,12 +8,9 @@ Last version: `r Sys.Date()`
 
 ```{r, echo=F}
 library(knitr)
-opts_knit$set(root.dir ="/home/indra/Dropbox/carpeta sin título/Datos_Indra")
-# setwd("/home/indra/Dropbox/carpeta sin titulo/")
+# opts_knit$set(root.dir ="/home/indra/Dropbox/carpeta sin título/Datos_Indra")
+setwd("/home/ngmedina/indra/data")
 ori.par <- par()
-```
-
-```{r set-options, echo=FALSE}
 options(width = 1400)
 ```
 
@@ -79,7 +76,7 @@ proj4string(climest) <- CRS("+proj=longlat +datum=WGS84")
 
 ### Load FUNCTIONS
 ```{r loadfunctions, cache=T, results="hide", message=F}
-knitr::knit("/home/indra/Documents/20161001.scales.riberas/Scales-riberas-R/FuncionesCalculosComunes.Rmd")
+# knitr::knit("/home/ngmedina/indra/scripts/FuncionesCalculosComunes.Rmd")
 ```
 
 # Calculate
@@ -236,7 +233,7 @@ loc.cos <- compact.local(regrich.cos, inv.cos, LocRich, area.cos, regcli.cos)
 
 # EXPORT RESULTS! :)
 ```{r export, dependson=c("regres", "locres", "interbeta")}
-save(reg.bas, loc.bas, interbeta.bas, file = "results.local/res.basins.Rdata")
-save(reg.geo, loc.geo, interbeta.geo, file = "results.local/res.geobuffers.Rdata")
-save(reg.cos, loc.cos, interbeta.cos, file = "results.local/res.costbuffers.Rdata")
+save(reg.bas, loc.bas, interbeta.bas, file = "results/res.basins.Rdata")
+save(reg.geo, loc.geo, interbeta.geo, file = "results/res.geobuffers.Rdata")
+save(reg.cos, loc.cos, interbeta.cos, file = "results/res.costbuffers.Rdata")
 ```
