@@ -29,8 +29,6 @@ library(semPlot)
 load("/Users/marialeomontes/Documents/BIOLOGIA/ARTICULOS/Local_Regional/Datos/loc.bas.Rdata")
 loc.bas.indra <- loc.bas
 
-#save all r2
-r2 <- c(0,0,0,0,0,0,0,0)
 ```
  
 ### Scale 1
@@ -43,9 +41,14 @@ richSEM1 <- '
 
   #opcion variable compuesta 1 (fit1)
   climR <~ 1*pa +pcq + tcqm + tam
-  regrich ~ climR
+  regrich ~ b*climR
   locrich ~ tcqm
   locrich ~ tam
+
+  #indirect effect (fit1)
+    #no hace falta calcularlo para el fit2 porque lo estamos usando para calcular el 
+    #efecto directo de Clim en LRich
+  ab:= a*b
 
   #opcion variable compuesta 2 (fit2)
   # climL <~ tcqm + 1*tam
@@ -54,9 +57,10 @@ richSEM1 <- '
   # regrich ~ tcqm
   # regrich ~ pa
   # regrich ~ pcq
+
   
   #regresiones
-  locrich ~ regrich
+  locrich ~ a*regrich
   
   #correlations
   tam ~~ pa
@@ -68,14 +72,14 @@ richSEM1 <- '
   
 '
 
-fit1 <- sem(model = richSEM1, data = bdscaled, fixed.x = FALSE, std.lv= T)
+fit1 <- sem(model = richSEM1, data = bdscaled, fixed.x = FALSE)
 summary(fit1, standardized=TRUE)
 
 # show coefficients
 coef(fit1)
 
 #show R-squared
-r2[1] <- inspect(fit1, 'r2')
+inspect(fit1, 'r2')
 
 #show modification indexes
 mod_ind1 <- modindices(fit1)
@@ -95,9 +99,14 @@ richSEM2 <- '
 
   #opcion variable compuesta 1 (fit1)
   climR <~ 1*pa +pcq + tcqm + tam
-  regrich ~ climR
+  regrich ~ b*climR
   locrich ~ tcqm
   locrich ~ tam
+  
+  #indirect effect (fit1)
+    #no hace falta calcularlo para el fit2 porque lo estamos usando para calcular el 
+    #efecto directo de Clim en LRich
+  ab:= a*b
 
   #opcion variable compuesta 2 (fit2)
   # climL <~ tcqm + 1*tam
@@ -108,7 +117,7 @@ richSEM2 <- '
   # regrich ~ pcq
   
   #regresiones
-  locrich ~ regrich
+  locrich ~ a*regrich
 
   #correlations
   tam ~~ pa
@@ -127,7 +136,7 @@ summary(fit2, standardized=TRUE)
 coef(fit2)
 
 #show R-squared
-r2[2] <- inspect(fit2, 'r2')
+inspect(fit2, 'r2')
 
 #show modification indexes
 mod_ind2 <- modindices(fit2)
@@ -147,9 +156,14 @@ richSEM3 <- '
 
   #opcion variable compuesta 1 (fit1)
   climR <~ 1*pa +pcq + tcqm + tam
-  regrich ~ climR
+  regrich ~ b*climR
   locrich ~ tcqm
   locrich ~ tam
+
+  #indirect effect (fit1)
+    #no hace falta calcularlo para el fit2 porque lo estamos usando para calcular el 
+    #efecto directo de Clim en LRich
+  ab:= a*b
 
   #opcion variable compuesta 2 (fit2)
 #   climL <~ 1*tcqm + tam
@@ -160,7 +174,7 @@ richSEM3 <- '
 #   regrich ~ pcq
    
   #regresiones
-  locrich ~ regrich
+  locrich ~ a*regrich
 
   #correlations
   tam ~~ pa
@@ -179,7 +193,7 @@ summary(fit3, standardized=TRUE)
 coef(fit3)
 
 #show R-squared
-r2[3] <- inspect(fit3, 'r2')
+inspect(fit3, 'r2')
 
 #show modification indexes
 mod_ind3 <- modindices(fit3)
@@ -198,21 +212,26 @@ richSEM4 <- '
   #measurement model
 
   #opcion variable compuesta 1 (fit1)
-#   climR <~ 1*pa +pcq + tcqm + tam
-#   regrich ~ climR
-#   locrich ~ tcqm
-#   locrich ~ tam
+  climR <~ 1*pa +pcq + tcqm + tam
+  regrich ~ b*climR
+  locrich ~ tcqm
+  locrich ~ tam
+
+  #indirect effect (fit1)
+    #no hace falta calcularlo para el fit2 porque lo estamos usando para calcular el 
+    #efecto directo de Clim en LRich
+  ab:= a*b
 
   #opcion variable compuesta 2 (fit2)
-  climL <~ 1*tcqm + tam
-  locrich ~ climL
-  regrich ~ tam
-  regrich ~ tcqm
-  regrich ~ pa
-  regrich ~ pcq
+#   climL <~ 1*tcqm + tam
+#   locrich ~ climL
+#   regrich ~ tam
+#   regrich ~ tcqm
+#   regrich ~ pa
+#   regrich ~ pcq
    
   #regresiones
-  locrich ~ regrich
+  locrich ~ a*regrich
 
   #correlations
   tam ~~ pa
@@ -231,7 +250,7 @@ summary(fit4, standardized=TRUE)
 coef(fit4)
 
 #show R-squared
-r2[4] <- inspect(fit4, 'r2')
+inspect(fit4, 'r2')
 
 #show modification indexes
 mod_ind4 <- modindices(fit4)
@@ -251,9 +270,14 @@ richSEM5 <- '
 
     #opcion variable compuesta 1 (fit1)
   climR <~ 1*pa +pcq + tcqm + tam
-  regrich ~ climR
+  regrich ~ b*climR
   locrich ~ tcqm
   locrich ~ tam
+
+  #indirect effect (fit1)
+    #no hace falta calcularlo para el fit2 porque lo estamos usando para calcular el 
+    #efecto directo de Clim en LRich
+  ab:= a*b
 
   #opcion variable compuesta 2 (fit2)
 #   climL <~ 1*tcqm + tam
@@ -264,7 +288,7 @@ richSEM5 <- '
 #   regrich ~ pcq
    
   #regresiones
-  locrich ~ regrich
+  locrich ~ a*regrich
 
 
   #correlations
@@ -284,7 +308,7 @@ summary(fit5, standardized=TRUE)
 coef(fit5)
 
 #show R-squared
-r2[5] <- inspect(fit5, 'r2')
+inspect(fit5, 'r2')
 
 #show modification indexes
 mod_ind5 <- modindices(fit5)
@@ -304,9 +328,14 @@ richSEM6 <- '
 
   #opcion variable compuesta 1 (fit1)
   climR <~ 1*pa +pcq + tcqm + tam
-  regrich ~ climR
+  regrich ~ b*climR
   locrich ~ tcqm
   locrich ~ tam
+
+  #indirect effect (fit1)
+    #no hace falta calcularlo para el fit2 porque lo estamos usando para calcular el 
+    #efecto directo de Clim en LRich
+  ab:= a*b
 
   #opcion variable compuesta 2 (fit2)
 #   climL <~ 1*tcqm + tam
@@ -317,7 +346,7 @@ richSEM6 <- '
 #   regrich ~ pcq
    
   #regresiones
-  locrich ~ regrich
+  locrich ~ a*regrich
 
   #correlations
   tam ~~ pa
@@ -336,7 +365,7 @@ summary(fit6, standardized=TRUE)
 coef(fit6)
 
 #show R-squared
-r2[6] <- inspect(fit6, 'r2')
+inspect(fit6, 'r2')
 
 #show modification indexes
 mod_ind6 <- modindices(fit6)
@@ -355,21 +384,26 @@ richSEM7 <- '
   #measurement model
 
   #opcion variable compuesta 1 (fit1)
-#   climR <~ 1*pa +pcq + tcqm + tam
-#   regrich ~ climR
-#   locrich ~ tcqm
-#   locrich ~ tam
+  climR <~ 1*pa +pcq + tcqm + tam
+  regrich ~ b*climR
+  locrich ~ tcqm
+  locrich ~ tam
+
+  #indirect effect (fit1)
+    #no hace falta calcularlo para el fit2 porque lo estamos usando para calcular el 
+    #efecto directo de Clim en LRich
+  ab:= a*b
 
   #opcion variable compuesta 2 (fit2)
-  climL <~ 1*tcqm + tam
-  locrich ~ climL
-  regrich ~ tam
-  regrich ~ tcqm
-  regrich ~ pa
-  regrich ~ pcq
+#   climL <~ 1*tcqm + tam
+#   locrich ~ climL
+#   regrich ~ tam
+#   regrich ~ tcqm
+#   regrich ~ pa
+#   regrich ~ pcq
  
  #regresiones
-  locrich ~ regrich
+  locrich ~ a*regrich
    
   #correlations
   tam ~~ pa
@@ -388,7 +422,7 @@ summary(fit7, standardized=TRUE)
 coef(fit7)
 
 #show R-squared
-r2[7] <- inspect(fit7, 'r2')
+inspect(fit7, 'r2')
 
 #show modification indexes
 mod_ind7 <- modindices(fit7)
@@ -407,21 +441,26 @@ richSEM8 <- '
 #measurement model
  
  #opcion variable compuesta 1 (fit1)
-  climR <~ 1*pa +pcq + tcqm + tam
-  regrich ~ climR
-  locrich ~ tcqm
-  locrich ~ tam
+#   climR <~ 1*pa +pcq + tcqm + tam
+#   regrich ~ b*climR
+#   locrich ~ tcqm
+#   locrich ~ tam
+# 
+#   #indirect effect (fit1)
+#     #no hace falta calcularlo para el fit2 porque lo estamos usando para calcular el 
+#     #efecto directo de Clim en LRich
+#   ab:= a*b
 
   #opcion variable compuesta 2 (fit2)
-#   climL <~ 1*tcqm + tam
-#   locrich ~ climL
-#   regrich ~ tam
-#   regrich ~ tcqm
-#   regrich ~ pa
-#   regrich ~ pcq
+  climL <~ 1*tcqm + tam
+  locrich ~ climL
+  regrich ~ tam
+  regrich ~ tcqm
+  regrich ~ pa
+  regrich ~ pcq
 
   #regresiones
-  locrich ~ regrich
+  locrich ~ a*regrich
 
   #correlations
   tam ~~ pa
@@ -440,7 +479,7 @@ summary(fit8, standardized=TRUE)
 coef(fit8)
 
 #show R-squared
-r2[8] <- inspect(fit8, 'r2')
+inspect(fit8, 'r2')
 
 #show modification indexes
 mod_ind8 <- modindices(fit8)
