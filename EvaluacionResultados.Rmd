@@ -9,11 +9,8 @@ Last version: `r Sys.Date()`
 ```{r, echo=F}
 library(knitr)
 # opts_knit$set(root.dir ="/home/indra/Dropbox/carpeta sin título/Datos_Indra")
-setwd("/home/indra/Dropbox/carpeta sin titulo/results.CCC/")
+setwd("/home/ngmedina/indra/results")
 ori.par <- par()
-```
-
-```{r set-options, echo=FALSE}
 options(width = 1400)
 ```
 
@@ -35,7 +32,7 @@ load("res.geobuffers.Rdata")
 load("res.costbuffers.Rdata")
 ```
 
-# calculate correlations
+# Calculate correlations
 ```{r, echo=F}
 cor.bas <- ddply(reg.bas, .(scale), summarize,
               area.med = median(area),
@@ -62,7 +59,8 @@ cor.cos <- ddply(reg.cos, .(scale), summarize,
               )
 ```
 
-DESIGN FUNCTION: how much data do we have for each pool?
+## DESIGN FUNCTION:
+how much data do we have for each pool?
 ```{r}
 # comprobar q las areas de los hulls.cos están por encima del limite de la escala
 # es decir, 
@@ -100,7 +98,8 @@ cor.cos$area.med
 area.cos.sup
 ```
 
-EXECUTE FUNCTION: how much data do we have for each pool?
+## EXECUTE FUNCTION
+how much data do we have for each pool?
 ```{r}
 # BASINS
 the.bas <- res.eval(reg.bas)[1,]
@@ -108,9 +107,9 @@ nas.bas <- res.eval(reg.bas)[-1,]
 use.bas <- t(apply(nas.bas, 1, function(fila){the.bas - fila}))
 puse.bas <- t(apply(use.bas, 1, function(fila){round(100* fila / the.bas, 2)}))
 use.the.bas <- t(apply(use.bas, 1, function(fila){paste0(fila, " (", the.bas, ")")}))
-write.table(use.the.bas, "/home/indra/Dropbox/carpeta sin titulo/results.local/eval.bas.csv", sep=";", quote = F, row.names = T)
+# write.table(use.the.bas, "/home/indra/Dropbox/carpeta sin titulo/results.local/eval.bas.csv", sep=";", quote = F, row.names = T)
 
-write.table(puse.bas, "/home/indra/Dropbox/carpeta sin titulo/results.local/peval.bas.csv", sep=";", quote = F, row.names = T)
+write.table(puse.bas, "peval.bas.csv", sep=";", quote = F, row.names = T)
 
 # GEOBUFFERS
 the.geo <- res.eval(reg.geo)[1,]
@@ -118,9 +117,9 @@ nas.geo <- res.eval(reg.geo)[-1,]
 use.geo <- t(apply(nas.geo, 1, function(fila){the.geo - fila}))
 puse.geo <- t(apply(use.geo, 1, function(fila){round(100* fila / the.geo, 2)}))
 use.the.geo <- t(apply(use.geo, 1, function(fila){paste0(fila, " (", the.geo, ")")}))
-write.table(use.the.geo, "/home/indra/Dropbox/carpeta sin titulo/results.local/eval.geo.csv", sep=";", quote = F, row.names = T)
+# write.table(use.the.geo, "/home/indra/Dropbox/carpeta sin titulo/results.local/eval.geo.csv", sep=";", quote = F, row.names = T)
 
-write.table(puse.geo, "/home/indra/Dropbox/carpeta sin titulo/results.local/peval.geo.csv", sep=";", quote = F, row.names = T)
+write.table(puse.geo, "peval.geo.csv", sep=";", quote = F, row.names = T)
 
 # COSTBUFFERS
 the.cos <- res.eval(reg.cos)[1,]
@@ -128,13 +127,16 @@ nas.cos <- res.eval(reg.cos)[-1,]
 use.cos <- t(apply(nas.cos, 1, function(fila){the.cos - fila}))
 puse.cos <- t(apply(use.cos, 1, function(fila){round(100* fila / the.cos, 2)}))
 use.the.cos <- t(apply(use.cos, 1, function(fila){paste0(fila, " (", the.cos, ")")}))
-write.table(use.the.cos, "/home/indra/Dropbox/carpeta sin titulo/results.local/eval.cos.csv", sep=";", quote = F, row.names = T)
+# write.table(use.the.cos, "/home/indra/Dropbox/carpeta sin titulo/results.local/eval.cos.csv", sep=";", quote = F, row.names = T)
 
-write.table(puse.cos, "/home/indra/Dropbox/carpeta sin titulo/results.local/peval.cos.csv", sep=";", quote = F, row.names = T)
+write.table(puse.cos, "peval.cos.csv", sep=";", quote = F, row.names = T)
 ```
 
-PLOT: how much data do we have for each pool?
+PLOT
+how much data do we have for each pool?
 ```{r}
+pdf(file = "/home/ngmedina/indra/results/eval.plots.pdf", paper = "special", width = 12, height = 9)
+
 par(mfrow=c(1,1))
 plot(cor.bas$area.med, puse.bas, ylim=c(0,100), type="o", ylab="% data used", xlab="area (km²)")
 lines(cor.geo$area.med, perc.clim.na.geo, lty=2, type="o")
@@ -142,7 +144,8 @@ lines(cor.cos$area.med, perc.clim.na.cos, lty=3, type="o")
 text(expand.grid(cor.geo$area.med[1], c(perc.clim.na.bas[1],perc.clim.na.geo[1],perc.clim.na.cos[1])), labels=c("bas", "geo", "cos"), pos=3)
 ```
 
-PLOT: which pools have less than 3 inventarios
+PLOT
+which pools have less than 3 inventarios
 ```{r}
 scale <- 6
 par(mar=c(0,0,3,0))
@@ -151,5 +154,7 @@ mtext(paste0("(scale ", scale,")"))
 plot(polygons(basins[[scale]])[3>sapply(inv.bas, sapply, length)[[scale]]], col="blue", add=T)
 polygonsLabel(pols = basins[[scale]], labels = as.numeric(sapply(inv.bas, sapply, length)[[scale]]), col="black", cex=1, method="centroid", doPlot = T)
 points(inv, pch="+")
+
+dev.off()
 ```
 

@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r, echo=F}
-library(knitr)
+# library(knitr)
 ```
 
 ### Funciones que se basan en polygonos  
@@ -124,7 +124,7 @@ return(hulls)
 ```{r}
 # pensar en usar gArea(basins[[8]], byid=T)
 calc.RegArea <- function(polys){
-scales.areas <- lapply(polys, function(scale){-area(scale)/1000000})
+scales.areas <- lapply(polys, function(scale){area(scale)/1000000})
 names(scales.areas) <- paste0("scale.", 1:length(polys))
 return(scales.areas)
 }
