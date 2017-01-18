@@ -10,6 +10,7 @@ Last version: `r Sys.Date()`
 library(knitr)
 # opts_knit$set(root.dir ="/home/indra/Dropbox/carpeta sin título/Datos_Indra")
 setwd("/home/ngmedina/indra/results")
+setwd("/Users/marialeomontes/Dropbox/carpeta sin titulo/results.local")
 ori.par <- par()
 ```
 
@@ -161,6 +162,7 @@ lines(x=cor.cos$area.med, y=cor.cos$cor.reg.tcqm, type="o", col="red")
 lines(x=cor.cos$area.med, y=cor.cos$cor.reg.pa, type="o", col="blue")
 lines(x=cor.cos$area.med, y=cor.cos$cor.reg.pcq, type="o", col="green")
 
+legend("topright", lwd=c(1,1,1), lty=c(1,1,1), legend = c("tam", "tcqm", "pa", "pcq"), bty="n", cex=0.8, col = c("black", "red", "blue", "green"))
 ```
 
 # plot beta intra-pool
